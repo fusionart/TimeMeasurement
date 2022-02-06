@@ -25,6 +25,8 @@ import Model.TimeMeasurementHeader;
 import Model.ZA;
 import Service.SaveData;
 import Service.TimeMeasurementHeaderServices;
+import TableParameters.DetailTableItemModel;
+import TableParameters.OddRowColorRenderer;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.DefaultComboBoxModel;
@@ -40,6 +42,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
 import javax.swing.border.TitledBorder;
 import java.awt.GridBagLayout;
 import java.awt.Image;
@@ -57,9 +62,9 @@ public class AddMeasurements extends JFrame {
 
 	private static DefaultTableModel defaultTableModel;
 	private TableRowSorter<DefaultTableModel> sorter;
+	private DetailTableItemModel tiModel;
 	private static JLabel lblBackground;
 
-	private static String header[] = { "FZ", "Код", "Тип", "Описание", "LG", "TG" };
 	private static JTable tblMain;
 
 	private static List<TimeMeasurementDetail> detailList = new ArrayList<TimeMeasurementDetail>();
@@ -227,7 +232,8 @@ public class AddMeasurements extends JFrame {
 				txtLg.setText("");
 				txtZaCode.setText("");
 				cboZA.setSelectedIndex(0);
-				FillTable();
+				tiModel = new DetailTableItemModel(detailList);
+				tblMain.setModel(tiModel);
 			}
 		});
 		txtLg.setFont(Base.DEFAULT_FONT);
@@ -277,6 +283,7 @@ public class AddMeasurements extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
 					SaveData.SaveAll(new TimeMeasurementHeader(txtMeasurementName.getText()), detailList);
+					dispose();
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -289,17 +296,12 @@ public class AddMeasurements extends JFrame {
 		// create table
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setBounds(25, 150, Base.WIDTH - 50, 500);
-		// scrollPane.getViewport().setBackground(new Color(255, 255, 255, 200));
-		scrollPane.getViewport().setBackground(Color.blue);
+		scrollPane.getViewport().setBackground(Color.white);
 		contentPane.add(scrollPane);
-
-		defaultTableModel = new DefaultTableModel(0, 0);
-
-		defaultTableModel.setColumnIdentifiers(header);
 
 		sorter = new TableRowSorter<DefaultTableModel>(defaultTableModel);
 
-		tblMain = new JTable(defaultTableModel) {
+		tblMain = new JTable() {
 			public boolean isCellEditable(int row, int column) {
 				return false;
 			};
@@ -310,31 +312,39 @@ public class AddMeasurements extends JFrame {
 		tblMain.getTableHeader().setFont(Base.DEFAULT_FONT);
 		tblMain.getTableHeader().setResizingAllowed(true);
 		scrollPane.setViewportView(tblMain);
-		// tblMain.setModel(defaultTableModel);
 		tblMain.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		tblMain.setRowSorter(sorter);
-		// tblMain.setBackground(new Color(255, 255, 255, 200));
-		tblMain.setBackground(Color.blue);
-		BaseMethods.ResizeColumnWidth(tblMain);
+		tblMain.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				System.out.println(tblMain.getSelectedRow());
+				TimeMeasurementDetail tmDetail = tiModel.getDetailAt(tblMain.getSelectedRow());
+				System.out.println(tmDetail.getFz());
+			}
+		});
+		
+		OddRowColorRenderer orcr = new OddRowColorRenderer();
+		tblMain.setDefaultRenderer(Object.class, orcr);
 
 		if (detailList.size() != 0) {
-			FillTable();
+			tiModel = new DetailTableItemModel(detailList);
+			tblMain.setModel(tiModel);
+			BaseMethods.ResizeColumnWidth(tblMain);
 		}
 
 		SetBackgroundPicture();
 		setVisible(true);
 	}
 
-	private static void FillTable() {
-
-		defaultTableModel.setRowCount(0);
-
-		for (TimeMeasurementDetail entry : detailList) {
-
-			defaultTableModel
-					.addRow(new Object[] { entry.getFz(), entry.getZaCode(), "", "", entry.getLg(), entry.getTg() });
-		}
-	}
+//	private static void FillTable() {
+//
+//		defaultTableModel.setRowCount(0);
+//
+//		for (TimeMeasurementDetail entry : detailList) {
+//
+//			defaultTableModel
+//					.addRow(new Object[] { entry.getFz(), entry.getZaCode(), "", "", entry.getLg(), entry.getTg() });
+//		}
+//	}
 
 	private class ZaRenderer extends DefaultListCellRenderer {
 

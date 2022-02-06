@@ -1,18 +1,16 @@
 package View;
 
-import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.util.List;
-import java.util.Map;
-
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 
@@ -20,10 +18,15 @@ import Controller.Base;
 import Controller.BaseMethods;
 import Model.TimeMeasurementHeader;
 import Service.TimeMeasurementHeaderServices;
+import TableParameters.DetailTableItemModel;
+import TableParameters.HeaderTableItemModel;
+import TableParameters.OddRowColorRenderer;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.event.ActionEvent;
 import java.awt.Color;
 
@@ -31,12 +34,9 @@ public class Header extends JFrame {
 
 	private JPanel contentPane;
 
-	private static DefaultTableModel defaultTableModel;
-	private TableRowSorter<DefaultTableModel> sorter;
+	private static HeaderTableItemModel tiModel;
 	
 	private static JLabel lblBackground;
-
-	private static String header[] = { "#", "Описание", "Дата на създаване" };
 
 	private static JTable tblMain;
 
@@ -68,13 +68,7 @@ public class Header extends JFrame {
 		scrollPane.getViewport().setBackground(Color.white);
 		contentPane.add(scrollPane);
 
-		defaultTableModel = new DefaultTableModel(0, 0);
-
-		defaultTableModel.setColumnIdentifiers(header);
-
-		sorter = new TableRowSorter<DefaultTableModel>(defaultTableModel);
-
-		tblMain = new JTable(defaultTableModel) {
+		tblMain = new JTable() {
 			public boolean isCellEditable(int row, int column) {
 				return false;
 			};
@@ -85,13 +79,12 @@ public class Header extends JFrame {
 		tblMain.getTableHeader().setFont(Base.DEFAULT_FONT);
 		tblMain.getTableHeader().setResizingAllowed(true);
 		scrollPane.setViewportView(tblMain);
-		// tblMain.setModel(defaultTableModel);
 		tblMain.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		tblMain.setRowSorter(sorter);
 		tblMain.getTableHeader().setOpaque(false);
-		//tblMain.getTableHeader().setBackground(Color.blue);
 		
-
+		OddRowColorRenderer orcr = new OddRowColorRenderer();
+		tblMain.setDefaultRenderer(Object.class, orcr);		
+		
 		JButton btnAddNew = new JButton("Ново измерване");
 		btnAddNew.setForeground(Color.WHITE);
 		btnAddNew.setBackground(Base.BUTTON_COLOR);
@@ -99,7 +92,14 @@ public class Header extends JFrame {
 		btnAddNew.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
-					new AddMeasurements();
+					AddMeasurements addMeasurement = new AddMeasurements();
+					addMeasurement.addWindowListener(new WindowAdapter() {
+						@Override
+						public void windowClosed(WindowEvent e) {
+							super.windowClosed(e);
+							FillTable();
+						}
+					});
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -109,20 +109,29 @@ public class Header extends JFrame {
 		btnAddNew.setBounds(1115, 705, Base.BUTTON_WIDTH, Base.BUTTON_HEIGHT);
 		contentPane.add(btnAddNew);
 
+		FillTable();
 		SetBackgroundPicture();
 		setVisible(true);
-		FillTable();
-		BaseMethods.ResizeColumnWidth(tblMain);
 	}
 
-	private static void FillTable() throws Exception {
-		List<TimeMeasurementHeader> data = TimeMeasurementHeaderServices.GetRecords();
+	private static void FillTable() {
+		List<TimeMeasurementHeader> data = null;
+		try {
+			data = TimeMeasurementHeaderServices.GetRecords();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		if (data.size() != 0) {
+			tiModel = new HeaderTableItemModel(data);
+			tblMain.setModel(tiModel);
+			BaseMethods.ResizeColumnWidth(tblMain);
+			
+			DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+	        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
 
-		defaultTableModel.setRowCount(0);
-
-		for (TimeMeasurementHeader entry : data) {
-
-			defaultTableModel.addRow(new Object[] { entry.getId(), entry.getName(), BaseMethods.ExtractDate(entry.getCreateDate()) });
+	        tblMain.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
 		}
 	}
 	

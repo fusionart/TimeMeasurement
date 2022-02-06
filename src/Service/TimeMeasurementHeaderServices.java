@@ -10,7 +10,7 @@ import com.j256.ormlite.support.ConnectionSource;
 import Controller.Base;
 import Model.TimeMeasurementHeader;
 
-public class TimeMeasurementHeaderServices {
+public class TimeMeasurementHeaderServices{
 
 	private static Dao<TimeMeasurementHeader, Integer> tmDao;
 	static ConnectionSource connectionSource = null;

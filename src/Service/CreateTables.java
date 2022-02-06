@@ -16,32 +16,28 @@ import Model.TimeMeasurementHeader;
 public class CreateTables {
 	public static void CreateDbTables() throws Exception {
 
-	    // create a connection source to our database
-	    ConnectionSource connectionSource = new JdbcConnectionSource(Base.DATABASE_URL);
-	    
-	    // instantiate the dao
-//        Dao<TimeMeasurementHeader> tmHeaderDao =
-//            DaoManager.createDao(connectionSource, TimeMeasurementHeader.class);
+		// create a connection source to our database
+		ConnectionSource connectionSource = new JdbcConnectionSource(Base.DATABASE_URL);
 
-        TableUtils.createTableIfNotExists(connectionSource, TimeMeasurementHeader.class);
-        
-        TableUtils.createTableIfNotExists(connectionSource, TimeMeasurementDetail.class);
-        
-        // close the connection source
-        connectionSource.close();
+		TableUtils.createTableIfNotExists(connectionSource, TimeMeasurementHeader.class);
+
+		TableUtils.createTableIfNotExists(connectionSource, TimeMeasurementDetail.class);
+
+		// close the connection source
+		connectionSource.close();
 	}
-	
+
 	public static void createNewDatabase() {
 
-        try (Connection conn = DriverManager.getConnection(Base.DATABASE_URL)) {
-            if (conn != null) {
-                DatabaseMetaData meta = conn.getMetaData();
-                System.out.println("The driver name is " + meta.getDriverName());
-                System.out.println("A new database has been created.");
-            }
+		try (Connection conn = DriverManager.getConnection(Base.DATABASE_URL)) {
+			if (conn != null) {
+				DatabaseMetaData meta = conn.getMetaData();
+				System.out.println("The driver name is " + meta.getDriverName());
+				System.out.println("A new database has been created.");
+			}
 
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-    }
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		}
+	}
 }
