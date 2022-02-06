@@ -15,17 +15,14 @@ public class Base {
 	private static String slash;
 
 	// Paths
-	private final static String MAIN_PATH = "/home/nick/eclipse-workspace/TimeMeasurement/sys/settings.ini";
+	private final static String MAIN_PATH_LINUX = "/home/nick/eclipse-workspace/TimeMeasurement/sys/settings.ini";
+	private final static String MAIN_PATH_WIN = "C:\\TimeMeasurement\\sys\\settings.ini";
 
 	// database
 	public static String DATABASE_URL = "jdbc:sqlite:db/timemeasurement.db";
 
 	// Labels
 	public final static String FRAME_CAPTION = "Time Measurement";
-
-	// Files
-	public final static String ZA_FILE = "/home/nick/eclipse-workspace/TimeMeasurement/sys/ZA.xlsx";
-	public final static String BACKGROUND = "/home/nick/eclipse-workspace/TimeMeasurement/sys/background.jpg";
 
 	// Size
 	public final static int WIDTH = 1366;
@@ -65,8 +62,13 @@ public class Base {
 	}
 
 	private static void LoadPaths() {
+		String os = GetOperatingSystem();
 		try {
-			settings = ReadIni.ParseIni(MAIN_PATH);
+			if (os.equals("Linux")) {
+				settings = ReadIni.ParseIni(MAIN_PATH_LINUX);
+			} else {
+				settings = ReadIni.ParseIni(MAIN_PATH_WIN);
+			}
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
