@@ -35,6 +35,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.JCheckBox;
 import javax.swing.SwingConstants;
 import javax.swing.JButton;
@@ -65,9 +66,10 @@ public class AddMeasurements extends JFrame {
 	private DetailTableItemModel tiModel;
 	private static JLabel lblBackground;
 
+	private static int selectedRow = -1;
+
 	private static JTable tblMain;
 
-	private static List<TimeMeasurementDetail> detailList = new ArrayList<TimeMeasurementDetail>();
 	private JTextField txtLg;
 
 	/**
@@ -75,7 +77,7 @@ public class AddMeasurements extends JFrame {
 	 * 
 	 * @throws Exception
 	 */
-	public AddMeasurements() throws Exception {
+	public AddMeasurements(List<TimeMeasurementDetail> detailList) throws Exception {
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		Image frameIcon = Toolkit.getDefaultToolkit().getImage(Base.icon);
 		setIconImage(frameIcon);
@@ -92,7 +94,7 @@ public class AddMeasurements extends JFrame {
 		setLocationRelativeTo(null);
 		contentPane.setLayout(null);
 
-		List<ZA> zaNew = ExcelFile.LoadZA();
+		List<ZA> zaList = ExcelFile.LoadZA();
 
 		JPanel pnlMeasurementData = new JPanel() {
 			protected void paintComponent(Graphics g) {
@@ -167,7 +169,7 @@ public class AddMeasurements extends JFrame {
 		gbc_cboZA.gridx = 5;
 		gbc_cboZA.gridy = 0;
 		pnlMeasurementData.add(cboZA, gbc_cboZA);
-		cboZA.setModel(new DefaultComboBoxModel<ZA>(zaNew.toArray(new ZA[0])));
+		cboZA.setModel(new DefaultComboBoxModel<ZA>(zaList.toArray(new ZA[0])));
 		cboZA.setRenderer(new ZaRenderer());
 		cboZA.setFont(Base.DEFAULT_FONT);
 		cboZA.addItemListener(e -> {
@@ -224,16 +226,35 @@ public class AddMeasurements extends JFrame {
 		txtLg.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
-				detailList.add(new TimeMeasurementDetail(null, Integer.parseInt(txtFz.getText()),
-						Integer.parseInt(txtLg.getText()), chckbxTg.isSelected(),
-						Integer.parseInt(txtZaCode.getText())));
+				selectedRow = tblMain.getSelectedRow();
+				System.out.println(selectedRow);
+				if (selectedRow == -1) {
+					TimeMeasurementDetail tmDetail = new TimeMeasurementDetail(null, Integer.parseInt(txtFz.getText()),
+							Integer.parseInt(txtLg.getText()), chckbxTg.isSelected(),
+							Integer.parseInt(txtZaCode.getText()));
+					detailList.add(tmDetail);
+					
+					tiModel.addRow(tmDetail);
+				} else {
+					TimeMeasurementDetail tmDetail = tiModel.getDetailAt(tblMain.getSelectedRow());
+					int getIndex = detailList.indexOf(tmDetail);
+
+					tmDetail.setFz(Integer.parseInt(txtFz.getText()));
+					tmDetail.setZaCode(Integer.parseInt(txtZaCode.getText()));
+					tmDetail.setTg(chckbxTg.isSelected());
+					tmDetail.setLg(Integer.parseInt(txtLg.getText()));
+
+					detailList.set(getIndex, tmDetail);
+
+					tiModel.fireTableRowsUpdated(selectedRow, selectedRow);
+				}
 				txtFz.setText("");
 				txtFz.requestFocus();
 				txtLg.setText("");
 				txtZaCode.setText("");
 				cboZA.setSelectedIndex(0);
-				tiModel = new DetailTableItemModel(detailList);
-				tblMain.setModel(tiModel);
+				chckbxTg.setSelected(true);
+				selectedRow = -1;
 			}
 		});
 		txtLg.setFont(Base.DEFAULT_FONT);
@@ -302,9 +323,9 @@ public class AddMeasurements extends JFrame {
 		sorter = new TableRowSorter<DefaultTableModel>(defaultTableModel);
 
 		tblMain = new JTable() {
-			public boolean isCellEditable(int row, int column) {
-				return false;
-			};
+//			public boolean isCellEditable(int row, int column) {
+//				return false;
+//			};
 		};
 		tblMain.setBounds(0, 0, 0, 0);
 		tblMain.setFont(Base.DEFAULT_FONT);
@@ -312,39 +333,33 @@ public class AddMeasurements extends JFrame {
 		tblMain.getTableHeader().setFont(Base.DEFAULT_FONT);
 		tblMain.getTableHeader().setResizingAllowed(true);
 		scrollPane.setViewportView(tblMain);
+		BaseMethods.ResizeColumnWidth(tblMain);
 		tblMain.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		tblMain.getTableHeader().setOpaque(false);
+		tblMain.setCellSelectionEnabled(false);
+		tblMain.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		tblMain.setRowSelectionAllowed(true);
 		tblMain.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				System.out.println(tblMain.getSelectedRow());
 				TimeMeasurementDetail tmDetail = tiModel.getDetailAt(tblMain.getSelectedRow());
-				System.out.println(tmDetail.getFz());
+				txtFz.setText(String.valueOf(tmDetail.getFz()));
+				txtFz.requestFocus();
+				txtLg.setText(String.valueOf(tmDetail.getLg()));
+				chckbxTg.setSelected(tmDetail.getTg());
+				cboZA.setSelectedIndex(tmDetail.getZaCode() - 1);
 			}
 		});
-		
+
 		OddRowColorRenderer orcr = new OddRowColorRenderer();
 		tblMain.setDefaultRenderer(Object.class, orcr);
 
-		if (detailList.size() != 0) {
-			tiModel = new DetailTableItemModel(detailList);
-			tblMain.setModel(tiModel);
-			BaseMethods.ResizeColumnWidth(tblMain);
-		}
+		tiModel = new DetailTableItemModel(detailList, zaList);
+		tblMain.setModel(tiModel);
 
 		SetBackgroundPicture();
 		setVisible(true);
 	}
-
-//	private static void FillTable() {
-//
-//		defaultTableModel.setRowCount(0);
-//
-//		for (TimeMeasurementDetail entry : detailList) {
-//
-//			defaultTableModel
-//					.addRow(new Object[] { entry.getFz(), entry.getZaCode(), "", "", entry.getLg(), entry.getTg() });
-//		}
-//	}
 
 	private class ZaRenderer extends DefaultListCellRenderer {
 

@@ -54,4 +54,12 @@ public class TimeMeasurementHeader {
 	public void setCreateDate(String createDate) {
 		this.createDate = createDate;
 	}
+
+	public ForeignCollection<TimeMeasurementDetail> getTmDetails() {
+		return tmDetails;
+	}
+
+	public void setTmDetails(ForeignCollection<TimeMeasurementDetail> tmDetails) {
+		this.tmDetails = tmDetails;
+	}
 }

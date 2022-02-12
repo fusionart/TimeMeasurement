@@ -16,6 +16,11 @@ public class OddRowColorRenderer implements TableCellRenderer {
 		Component c = DEFAULT_RENDERER.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
 		c.setBackground(row % 2 == 1 ? new Color(240, 240, 240) : Color.WHITE);
+		
+		if (isSelected) {
+			c.setBackground(new Color(100, 150, 237, 150));
+			c.setForeground(Color.black);
+		}
 
 		return c;
 	}

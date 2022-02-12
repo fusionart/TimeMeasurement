@@ -6,17 +6,22 @@ import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
 import Model.TimeMeasurementDetail;
+import Model.ZA;
 
 public class DetailTableItemModel extends AbstractTableModel {
 
     private List<TimeMeasurementDetail> tmDetails;
+    private List<ZA> zaList;
     
-    private static String header[] = { "FZ", "Код", "Тип", "Описание", "LG", "TG" };
+    private static String header[] = { "FZ", "Код", "Описание", "Тип", "TG", "LG" };
 
-    public DetailTableItemModel(List<TimeMeasurementDetail> tmDetails) {
+    public DetailTableItemModel(List<TimeMeasurementDetail> tmDetails, List<ZA> zaList) {
 
         this.tmDetails = new ArrayList<TimeMeasurementDetail>(tmDetails);
+        this.zaList = new ArrayList<ZA>(zaList);
     }
+    
+    
 
     @Override
     public int getRowCount() {
@@ -45,10 +50,10 @@ public class DetailTableItemModel extends AbstractTableModel {
                 value = tmDetail.getZaCode();
                 break;
             case 2:
-                value = "";
+                value = zaList.get(tmDetail.getZaCode()).getType();
                 break;
             case 3:
-                value = "";
+                value = zaList.get(tmDetail.getZaCode()).getDesc_bg();
                 break;
             case 4:
                 value = tmDetail.getTg();
@@ -59,6 +64,11 @@ public class DetailTableItemModel extends AbstractTableModel {
         }
 
         return value;
+    }
+    
+    public void addRow(TimeMeasurementDetail tmDetail) {
+    	tmDetails.add(tmDetail);
+        fireTableRowsInserted(tmDetails.size() -1, tmDetails.size() -1);
     }
 
     /**
