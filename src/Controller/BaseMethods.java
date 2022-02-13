@@ -84,8 +84,8 @@ public class BaseMethods {
 					column);
 			width = Math.max(width, headerComp.getPreferredSize().width + (headerComp.getPreferredSize().width / 5));
 
-			if (width > 300)
-				width = 300;
+			if (width > 400)
+				width = 400;
 			columnModel.getColumn(column).setPreferredWidth(width);
 		}
 	}

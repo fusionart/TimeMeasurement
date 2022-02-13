@@ -1,11 +1,6 @@
-package Controller;
+package Controller.Excel;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.SwingWorker;
@@ -15,45 +10,19 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Row.MissingCellPolicy;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import Controller.Base;
 import Model.ZA;
 import View.LoadingScreen;
 
-public class ExcelFile {
+public class LoadZaFile {
 	private static Workbook workbook;
 	private static List<ZA> allRows;
-	
+
 	public static List<ZA> LoadZA() {
-		ReadExcelFile();
+		workbook = ReadExcelFile.LoadExcelFile(Base.zaFile);
 		ReadAllRows();
-		//System.out.println(allRows.size());
 		return allRows;
-	}
-
-	private static void ReadExcelFile() {
-		// File file = new File(Base.mainDbFile);
-		File file = new File(Base.zaFile);
-		FileInputStream streamFile = null;
-		try {
-			streamFile = new FileInputStream(file);
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-			workbook = new XSSFWorkbook(streamFile);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		try {
-			streamFile.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 
 	private static void ReadAllRows() {
@@ -106,14 +75,12 @@ public class ExcelFile {
 						}
 					}
 
-					// PalletModel pm = new PalletModel(temp);
-					//ZA za = new ZA(temp);
 					allRows.add(new ZA(temp));
 					i++;
 
 					percentage = i * 100 / rowCount;
 					publish((int) percentage);
-					//ls.UpdateProgress(percentage);
+					// ls.UpdateProgress(percentage);
 				}
 				return null;
 			}
@@ -128,7 +95,6 @@ public class ExcelFile {
 			protected void process(List<Integer> ints) {
 				ls.setProgress(ints.get(0));
 			}
-
 		}.execute();
 	}
 

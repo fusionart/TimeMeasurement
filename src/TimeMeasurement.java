@@ -1,5 +1,5 @@
 import Controller.Base;
-import Service.CreateTables;
+import Controller.Services.CreateTables;
 import View.Header;
 
 public class TimeMeasurement {

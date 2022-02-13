@@ -18,6 +18,12 @@ public class TimeMeasurementHeader {
     @DatabaseField(canBeNull = false)
     private String createDate;
     
+    @DatabaseField(canBeNull = false)
+    private String startTime;
+    
+    @DatabaseField(canBeNull = false)
+    private String endTime;
+    
     @ForeignCollectionField(eager = false)
     private ForeignCollection<TimeMeasurementDetail> tmDetails;
     
@@ -25,9 +31,11 @@ public class TimeMeasurementHeader {
     	
     }
 
-	public TimeMeasurementHeader(String name) {
+	public TimeMeasurementHeader(String name, String startTime, String endTime) {
 		super();
 		this.name = name;
+		this.startTime = startTime;
+		this.endTime = endTime;
 		this.createDate = LocalDateTime.now().toString();
 	}
 
@@ -53,6 +61,22 @@ public class TimeMeasurementHeader {
 
 	public void setCreateDate(String createDate) {
 		this.createDate = createDate;
+	}
+
+	public String getStartTime() {
+		return startTime;
+	}
+
+	public void setStartTime(String startTime) {
+		this.startTime = startTime;
+	}
+
+	public String getEndTime() {
+		return endTime;
+	}
+
+	public void setEndTime(String endTime) {
+		this.endTime = endTime;
 	}
 
 	public ForeignCollection<TimeMeasurementDetail> getTmDetails() {

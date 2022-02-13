@@ -54,6 +54,7 @@ public class Base {
 	public static String backgroundPic;
 	public static String icon;
 	public static String zaFile;
+	public static String reportTemplate;
 
 	public static void LoadSettings() {
 		GetCorrectSlash();
@@ -128,5 +129,17 @@ public class Base {
 		sb.append(settings.node("zafile").get("extension", null));
 
 		zaFile = sb.toString();
+
+		// report template
+		sb = new StringBuilder();
+		sb.append(settings.node("system").get("mainaddress", null));
+		sb.append(slash);
+		sb.append(settings.node("report_template").get("address", null));
+		sb.append(slash);
+		sb.append(settings.node("report_template").get("name", null));
+		sb.append(DOT);
+		sb.append(settings.node("report_template").get("extension", null));
+
+		reportTemplate = sb.toString();
 	}
 }

@@ -19,23 +19,26 @@ import javax.swing.table.TableRowSorter;
 
 import Controller.Base;
 import Controller.BaseMethods;
-import Controller.ExcelFile;
+import Controller.Excel.LoadZaFile;
+import Controller.Services.CRUD;
+import Controller.Services.TimeMeasurementHeaderServices;
 import Model.TimeMeasurementDetail;
 import Model.TimeMeasurementHeader;
 import Model.ZA;
-import Service.SaveData;
-import Service.TimeMeasurementHeaderServices;
 import TableParameters.DetailTableItemModel;
 import TableParameters.OddRowColorRenderer;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultRowSorter;
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import javax.swing.JCheckBox;
 import javax.swing.SwingConstants;
 import javax.swing.JButton;
@@ -71,6 +74,8 @@ public class AddMeasurements extends JFrame {
 	private static JTable tblMain;
 
 	private JTextField txtLg;
+	private JTextField txtStartTime;
+	private JTextField txtEndTime;
 
 	/**
 	 * Create the frame.
@@ -94,7 +99,7 @@ public class AddMeasurements extends JFrame {
 		setLocationRelativeTo(null);
 		contentPane.setLayout(null);
 
-		List<ZA> zaList = ExcelFile.LoadZA();
+		List<ZA> zaList = LoadZaFile.LoadZA();
 
 		JPanel pnlMeasurementData = new JPanel() {
 			protected void paintComponent(Graphics g) {
@@ -233,8 +238,10 @@ public class AddMeasurements extends JFrame {
 							Integer.parseInt(txtLg.getText()), chckbxTg.isSelected(),
 							Integer.parseInt(txtZaCode.getText()));
 					detailList.add(tmDetail);
-					
+
 					tiModel.addRow(tmDetail);
+					BaseMethods.ResizeColumnWidth(tblMain);
+					// SortTable();
 				} else {
 					TimeMeasurementDetail tmDetail = tiModel.getDetailAt(tblMain.getSelectedRow());
 					int getIndex = detailList.indexOf(tmDetail);
@@ -269,13 +276,13 @@ public class AddMeasurements extends JFrame {
 		pnlMeasurement.setBorder(new TitledBorder(
 				new EtchedBorder(EtchedBorder.LOWERED, new Color(100, 149, 237), new Color(160, 160, 160)), "Измерване",
 				TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		pnlMeasurement.setBounds(25, 7, 500, 60);
+		pnlMeasurement.setBounds(25, 7, 955, 60);
 		pnlMeasurement.setBackground(new Color(255, 255, 255, 200));
 		contentPane.add(pnlMeasurement);
 		GridBagLayout gbl_pnlMeasurement = new GridBagLayout();
-		gbl_pnlMeasurement.columnWidths = new int[] { 114, 234, 0 };
+		gbl_pnlMeasurement.columnWidths = new int[] { 110, 234, 125, 100, 110, 100, 0 };
 		gbl_pnlMeasurement.rowHeights = new int[] { 30, 0 };
-		gbl_pnlMeasurement.columnWeights = new double[] { 0.0, 1.0, Double.MIN_VALUE };
+		gbl_pnlMeasurement.columnWeights = new double[] { 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
 		gbl_pnlMeasurement.rowWeights = new double[] { 1.0, Double.MIN_VALUE };
 		pnlMeasurement.setLayout(gbl_pnlMeasurement);
 
@@ -290,11 +297,47 @@ public class AddMeasurements extends JFrame {
 
 		txtMeasurementName = new JTextField();
 		GridBagConstraints gbc_txtMeasurementName = new GridBagConstraints();
+		gbc_txtMeasurementName.insets = new Insets(0, 0, 0, 5);
 		gbc_txtMeasurementName.fill = GridBagConstraints.BOTH;
 		gbc_txtMeasurementName.gridx = 1;
 		gbc_txtMeasurementName.gridy = 0;
 		pnlMeasurement.add(txtMeasurementName, gbc_txtMeasurementName);
 		txtMeasurementName.setFont(Base.DEFAULT_FONT);
+
+		JLabel lblStartTime = new JLabel("Начало, час");
+		GridBagConstraints gbc_lblStartTime = new GridBagConstraints();
+		gbc_lblStartTime.fill = GridBagConstraints.HORIZONTAL;
+		gbc_lblStartTime.insets = new Insets(0, 0, 0, 5);
+		gbc_lblStartTime.gridx = 2;
+		gbc_lblStartTime.gridy = 0;
+		pnlMeasurement.add(lblStartTime, gbc_lblStartTime);
+		lblStartTime.setFont(Base.DEFAULT_FONT);
+
+		txtStartTime = new JTextField();
+		GridBagConstraints gbc_txtStartTime = new GridBagConstraints();
+		gbc_txtStartTime.insets = new Insets(0, 0, 0, 5);
+		gbc_txtStartTime.fill = GridBagConstraints.BOTH;
+		gbc_txtStartTime.gridx = 3;
+		gbc_txtStartTime.gridy = 0;
+		pnlMeasurement.add(txtStartTime, gbc_txtStartTime);
+		txtStartTime.setFont(Base.DEFAULT_FONT);
+
+		JLabel lblEndTime = new JLabel("Край, час");
+		GridBagConstraints gbc_lblEndTime = new GridBagConstraints();
+		gbc_lblEndTime.fill = GridBagConstraints.HORIZONTAL;
+		gbc_lblEndTime.insets = new Insets(0, 0, 0, 5);
+		gbc_lblEndTime.gridx = 4;
+		gbc_lblEndTime.gridy = 0;
+		pnlMeasurement.add(lblEndTime, gbc_lblEndTime);
+		lblEndTime.setFont(Base.DEFAULT_FONT);
+
+		txtEndTime = new JTextField();
+		GridBagConstraints gbc_txtEndTime = new GridBagConstraints();
+		gbc_txtEndTime.fill = GridBagConstraints.BOTH;
+		gbc_txtEndTime.gridx = 5;
+		gbc_txtEndTime.gridy = 0;
+		pnlMeasurement.add(txtEndTime, gbc_txtEndTime);
+		txtEndTime.setFont(Base.DEFAULT_FONT);
 
 		JButton btnSave = new JButton("Запази");
 		btnSave.setForeground(Color.WHITE);
@@ -303,7 +346,7 @@ public class AddMeasurements extends JFrame {
 		btnSave.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
-					SaveData.SaveAll(new TimeMeasurementHeader(txtMeasurementName.getText()), detailList);
+					CRUD.SaveAll(new TimeMeasurementHeader(txtMeasurementName.getText(), txtStartTime.getText(), txtEndTime.getText()), detailList);
 					dispose();
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
@@ -333,7 +376,6 @@ public class AddMeasurements extends JFrame {
 		tblMain.getTableHeader().setFont(Base.DEFAULT_FONT);
 		tblMain.getTableHeader().setResizingAllowed(true);
 		scrollPane.setViewportView(tblMain);
-		BaseMethods.ResizeColumnWidth(tblMain);
 		tblMain.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		tblMain.getTableHeader().setOpaque(false);
 		tblMain.setCellSelectionEnabled(false);
@@ -356,9 +398,18 @@ public class AddMeasurements extends JFrame {
 
 		tiModel = new DetailTableItemModel(detailList, zaList);
 		tblMain.setModel(tiModel);
+		BaseMethods.ResizeColumnWidth(tblMain);
 
 		SetBackgroundPicture();
 		setVisible(true);
+	}
+
+	private void SortTable() {
+		DefaultRowSorter sorter = ((DefaultRowSorter) tblMain.getRowSorter());
+		ArrayList list = new ArrayList();
+		list.add(new RowSorter.SortKey(1, SortOrder.ASCENDING));
+		sorter.setSortKeys(list);
+		sorter.sort();
 	}
 
 	private class ZaRenderer extends DefaultListCellRenderer {

@@ -12,7 +12,7 @@ public class HeaderTableItemModel extends AbstractTableModel {
 
     private List<TimeMeasurementHeader> tmHeaders;
     
-    private static String header[] = { "#", "Описание", "Дата на създаване" };
+    private static String header[] = { "#", "Описание", "Начало, час","Край, час", "Дата на създаване" };
 
     public HeaderTableItemModel(List<TimeMeasurementHeader> tmHeaders) {
 
@@ -47,6 +47,12 @@ public class HeaderTableItemModel extends AbstractTableModel {
                 value = tmHeader.getName();
                 break;
             case 2:
+                value = tmHeader.getStartTime();
+                break;
+            case 3:
+                value = tmHeader.getEndTime();
+                break;
+            case 4:
                 value = BaseMethods.ExtractDate(tmHeader.getCreateDate());
                 break;
         }

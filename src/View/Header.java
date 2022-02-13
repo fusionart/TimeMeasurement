@@ -18,10 +18,10 @@ import javax.swing.table.TableRowSorter;
 
 import Controller.Base;
 import Controller.BaseMethods;
+import Controller.Services.CRUD;
+import Controller.Services.TimeMeasurementHeaderServices;
 import Model.TimeMeasurementDetail;
 import Model.TimeMeasurementHeader;
-import Service.SaveData;
-import Service.TimeMeasurementHeaderServices;
 import TableParameters.DetailTableItemModel;
 import TableParameters.HeaderTableItemModel;
 import TableParameters.OddRowColorRenderer;
@@ -133,7 +133,7 @@ public class Header extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
 					if (tmHeaderSelected != null) {
-						detailList = SaveData.GetAllDetails(tmHeaderSelected);
+						detailList = CRUD.GetAllDetails(tmHeaderSelected);
 						AddMeasurements addMeasurement = new AddMeasurements(detailList);
 						addMeasurement.addWindowListener(new WindowAdapter() {
 							@Override
@@ -170,16 +170,14 @@ public class Header extends JFrame {
 			e.printStackTrace();
 		}
 
-		if (data.size() != 0) {
-			tiModel = new HeaderTableItemModel(data);
-			tblMain.setModel(tiModel);
-			BaseMethods.ResizeColumnWidth(tblMain);
+		tiModel = new HeaderTableItemModel(data);
+		tblMain.setModel(tiModel);
+		BaseMethods.ResizeColumnWidth(tblMain);
 
-			DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-			centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+		centerRenderer.setHorizontalAlignment(JLabel.CENTER);
 
-			tblMain.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
-		}
+		tblMain.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
 	}
 
 	private void SetBackgroundPicture() {

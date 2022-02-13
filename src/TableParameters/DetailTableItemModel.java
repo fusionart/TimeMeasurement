@@ -50,10 +50,10 @@ public class DetailTableItemModel extends AbstractTableModel {
                 value = tmDetail.getZaCode();
                 break;
             case 2:
-                value = zaList.get(tmDetail.getZaCode()).getType();
+                value = zaList.get(tmDetail.getZaCode() - 1).getType();
                 break;
             case 3:
-                value = zaList.get(tmDetail.getZaCode()).getDesc_bg();
+                value = zaList.get(tmDetail.getZaCode() - 1).getDesc_bg();
                 break;
             case 4:
                 value = tmDetail.getTg();

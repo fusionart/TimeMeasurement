@@ -1,4 +1,4 @@
-package Service;
+package Controller.Services;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +13,7 @@ import Controller.Base;
 import Model.TimeMeasurementDetail;
 import Model.TimeMeasurementHeader;
 
-public class SaveData {
+public class CRUD {
 	private static Dao<TimeMeasurementHeader, Integer> tmHeaderDao;
 	private static Dao<TimeMeasurementDetail, Integer> tmDetailDao;
 	
