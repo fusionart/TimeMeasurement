@@ -55,6 +55,7 @@ public class Base {
 	public static String icon;
 	public static String zaFile;
 	public static String reportTemplate;
+	public static String reportSaveAddress;
 
 	public static void LoadSettings() {
 		GetCorrectSlash();
@@ -141,5 +142,12 @@ public class Base {
 		sb.append(settings.node("report_template").get("extension", null));
 
 		reportTemplate = sb.toString();
+
+		// report save
+		sb = new StringBuilder();
+		sb.append(settings.node("report_save").get("address", null));
+		sb.append(slash);
+
+		reportSaveAddress = sb.toString();
 	}
 }

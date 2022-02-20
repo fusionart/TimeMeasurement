@@ -1,6 +1,7 @@
 package TableParameters;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
@@ -10,73 +11,90 @@ import Model.ZA;
 
 public class DetailTableItemModel extends AbstractTableModel {
 
-    private List<TimeMeasurementDetail> tmDetails;
-    private List<ZA> zaList;
-    
-    private static String header[] = { "FZ", "Код", "Описание", "Тип", "TG", "LG" };
+	private List<TimeMeasurementDetail> tmDetails;
+	private List<ZA> zaList;
+	int fz;
 
-    public DetailTableItemModel(List<TimeMeasurementDetail> tmDetails, List<ZA> zaList) {
+	private static String header[] = { "Код", "Описание", "Тип", "FZ", "EZ", "LG", "TG"};
 
-        this.tmDetails = new ArrayList<TimeMeasurementDetail>(tmDetails);
-        this.zaList = new ArrayList<ZA>(zaList);
-    }
-    
-    
+	public DetailTableItemModel(List<TimeMeasurementDetail> tmDetails, List<ZA> zaList) {
 
-    @Override
-    public int getRowCount() {
-        return tmDetails.size();
-    }
+		this.tmDetails = new ArrayList<TimeMeasurementDetail>(tmDetails);
+		this.zaList = new ArrayList<ZA>(zaList);
+		this.fz = 0;
+	}
 
-    @Override
-    public int getColumnCount() {
-        return header.length;
-    }
-    
-    public String getColumnName(int col) {
-        return header[col];
-      }
+	@Override
+	public int getRowCount() {
+		return tmDetails.size();
+	}
 
-    @Override
-    public Object getValueAt(int rowIndex, int columnIndex) {
+	@Override
+	public int getColumnCount() {
+		return header.length;
+	}
 
-        Object value = "??";
-        TimeMeasurementDetail tmDetail = tmDetails.get(rowIndex);
-        switch (columnIndex) {
-            case 0:
-                value = tmDetail.getFz();
-                break;
-            case 1:
-                value = tmDetail.getZaCode();
-                break;
-            case 2:
-                value = zaList.get(tmDetail.getZaCode() - 1).getType();
-                break;
-            case 3:
-                value = zaList.get(tmDetail.getZaCode() - 1).getDesc_bg();
-                break;
-            case 4:
-                value = tmDetail.getTg();
-                break;
-            case 5:
-                value = tmDetail.getLg();
-                break;
-        }
+	public String getColumnName(int col) {
+		return header[col];
+	}
 
-        return value;
-    }
-    
-    public void addRow(TimeMeasurementDetail tmDetail) {
-    	tmDetails.add(tmDetail);
-        fireTableRowsInserted(tmDetails.size() -1, tmDetails.size() -1);
-    }
+	@Override
+	public Object getValueAt(int rowIndex, int columnIndex) {
 
-    /**
-     * This will return the user at the specified row...
-     * @param row
-     * @return 
-     */
-    public TimeMeasurementDetail getDetailAt(int row) {
-        return tmDetails.get(row);
-    }
+		Object value = "??";
+		TimeMeasurementDetail tmDetail = tmDetails.get(rowIndex);
+		switch (columnIndex) {
+		case 0:
+			value = tmDetail.getZaCode();
+			break;
+		case 1:
+			value = zaList.get(tmDetail.getZaCode() - 1).getDesc_bg();
+			break;
+		case 2:
+			value = zaList.get(tmDetail.getZaCode() - 1).getType();
+			break;
+		case 3:
+			value = tmDetail.getFz();
+			break;
+		case 4:
+			value = CalculateEz(tmDetail.getFz());
+			break;
+		case 5:
+			value = tmDetail.getLg();
+			break;
+		case 6:
+			value = tmDetail.getTg();
+			break;
+		}
+
+		return value;
+	}
+
+	private int CalculateEz(int detailFz) {
+		int ez = detailFz - fz;
+
+		if (ez < 0) {
+			ez = detailFz;
+		}
+
+		fz = detailFz;
+
+		return ez;
+	}
+
+	public void addRow(TimeMeasurementDetail tmDetail) {
+		tmDetails.add(tmDetail);
+		tmDetails.sort(Comparator.comparing(TimeMeasurementDetail::getFz));
+		fireTableRowsInserted(tmDetails.size() - 1, tmDetails.size() - 1);
+	}
+
+	/**
+	 * This will return the user at the specified row...
+	 * 
+	 * @param row
+	 * @return
+	 */
+	public TimeMeasurementDetail getDetailAt(int row) {
+		return tmDetails.get(row);
+	}
 }

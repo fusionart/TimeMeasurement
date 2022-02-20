@@ -11,8 +11,8 @@ public class TimeMeasurement {
 	 */
 	public static void main(String[] args) throws Exception {
 
-		CreateTables.createNewDatabase();
-		CreateTables.CreateDbTables();
+		//CreateTables.createNewDatabase();
+		//CreateTables.CreateDbTables();
 		Base.LoadSettings();
 		new Header();
 

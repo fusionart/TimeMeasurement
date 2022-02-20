@@ -4,41 +4,38 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableRowSorter;
 
 import Controller.Base;
+import Controller.BaseConstants;
 import Controller.BaseMethods;
+import Controller.CalculateReport;
 import Controller.Excel.LoadZaFile;
+import Controller.Excel.SaveReport;
 import Controller.Services.CRUD;
-import Controller.Services.TimeMeasurementHeaderServices;
 import Model.TimeMeasurementDetail;
 import Model.TimeMeasurementHeader;
 import Model.ZA;
 import TableParameters.DetailTableItemModel;
 import TableParameters.OddRowColorRenderer;
 
-import javax.swing.DefaultCellEditor;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
-import javax.swing.DefaultRowSorter;
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
-import javax.swing.RowSorter;
-import javax.swing.SortOrder;
 import javax.swing.JCheckBox;
 import javax.swing.SwingConstants;
 import javax.swing.JButton;
@@ -50,6 +47,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.border.TitledBorder;
+
 import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.GridBagConstraints;
@@ -64,8 +62,6 @@ public class AddMeasurements extends JFrame {
 	private JTextField txtZaType;
 	private JTextField txtMeasurementName;
 
-	private static DefaultTableModel defaultTableModel;
-	private TableRowSorter<DefaultTableModel> sorter;
 	private DetailTableItemModel tiModel;
 	private static JLabel lblBackground;
 
@@ -76,6 +72,8 @@ public class AddMeasurements extends JFrame {
 	private JTextField txtLg;
 	private JTextField txtStartTime;
 	private JTextField txtEndTime;
+	private JComboBox<ZA> cboZA;
+	private JCheckBox chckbxTg;
 
 	/**
 	 * Create the frame.
@@ -158,7 +156,7 @@ public class AddMeasurements extends JFrame {
 		pnlMeasurementData.add(txtZaCode, gbc_txtZaCode);
 		txtZaCode.setFont(Base.DEFAULT_FONT);
 
-		JLabel lblDesc = new JLabel("Описание");
+		JLabel lblDesc = new JLabel("Описание ZA");
 		GridBagConstraints gbc_lblDesc = new GridBagConstraints();
 		gbc_lblDesc.anchor = GridBagConstraints.WEST;
 		gbc_lblDesc.insets = new Insets(0, 0, 0, 5);
@@ -167,7 +165,7 @@ public class AddMeasurements extends JFrame {
 		pnlMeasurementData.add(lblDesc, gbc_lblDesc);
 		lblDesc.setFont(Base.DEFAULT_FONT);
 
-		JComboBox<ZA> cboZA = new JComboBox<ZA>();
+		cboZA = new JComboBox<ZA>();
 		GridBagConstraints gbc_cboZA = new GridBagConstraints();
 		gbc_cboZA.fill = GridBagConstraints.BOTH;
 		gbc_cboZA.insets = new Insets(0, 0, 0, 5);
@@ -201,7 +199,7 @@ public class AddMeasurements extends JFrame {
 		pnlMeasurementData.add(txtZaType, gbc_txtZaType);
 		txtZaType.setFont(Base.DEFAULT_FONT);
 
-		JCheckBox chckbxTg = new JCheckBox("TG");
+		chckbxTg = new JCheckBox("TG");
 		GridBagConstraints gbc_chckbxTg = new GridBagConstraints();
 		gbc_chckbxTg.fill = GridBagConstraints.HORIZONTAL;
 		gbc_chckbxTg.insets = new Insets(0, 0, 0, 5);
@@ -232,36 +230,39 @@ public class AddMeasurements extends JFrame {
 			@Override
 			public void focusLost(FocusEvent e) {
 				selectedRow = tblMain.getSelectedRow();
-				System.out.println(selectedRow);
+
 				if (selectedRow == -1) {
-					TimeMeasurementDetail tmDetail = new TimeMeasurementDetail(null, Integer.parseInt(txtFz.getText()),
-							Integer.parseInt(txtLg.getText()), chckbxTg.isSelected(),
-							Integer.parseInt(txtZaCode.getText()));
-					detailList.add(tmDetail);
+					if (ValidateNewRecord()) {
+						int fz = Integer.parseInt(txtFz.getText());
+						int lg = Integer.parseInt(txtLg.getText());
+						int zaCode = Integer.parseInt(txtZaCode.getText());
 
-					tiModel.addRow(tmDetail);
-					BaseMethods.ResizeColumnWidth(tblMain);
-					// SortTable();
+						TimeMeasurementDetail tmDetail = new TimeMeasurementDetail(null, fz, lg, chckbxTg.isSelected(),
+								zaCode);
+						detailList.add(tmDetail);
+
+						detailList.sort(Comparator.comparing(TimeMeasurementDetail::getFz));
+
+						tiModel.addRow(tmDetail);
+						BaseMethods.ResizeColumnWidth(tblMain);
+						ClearAddMeasurement();
+					}
 				} else {
-					TimeMeasurementDetail tmDetail = tiModel.getDetailAt(tblMain.getSelectedRow());
-					int getIndex = detailList.indexOf(tmDetail);
+					if (ValidateNewRecord()) {
+						TimeMeasurementDetail tmDetail = tiModel.getDetailAt(tblMain.getSelectedRow());
+						int getIndex = detailList.indexOf(tmDetail);
 
-					tmDetail.setFz(Integer.parseInt(txtFz.getText()));
-					tmDetail.setZaCode(Integer.parseInt(txtZaCode.getText()));
-					tmDetail.setTg(chckbxTg.isSelected());
-					tmDetail.setLg(Integer.parseInt(txtLg.getText()));
+						tmDetail.setFz(Integer.parseInt(txtFz.getText()));
+						tmDetail.setZaCode(Integer.parseInt(txtZaCode.getText()));
+						tmDetail.setTg(chckbxTg.isSelected());
+						tmDetail.setLg(Integer.parseInt(txtLg.getText()));
 
-					detailList.set(getIndex, tmDetail);
+						detailList.set(getIndex, tmDetail);
 
-					tiModel.fireTableRowsUpdated(selectedRow, selectedRow);
+						tiModel.fireTableRowsUpdated(selectedRow, selectedRow);
+						ClearAddMeasurement();
+					}
 				}
-				txtFz.setText("");
-				txtFz.requestFocus();
-				txtLg.setText("");
-				txtZaCode.setText("");
-				cboZA.setSelectedIndex(0);
-				chckbxTg.setSelected(true);
-				selectedRow = -1;
 			}
 		});
 		txtLg.setFont(Base.DEFAULT_FONT);
@@ -346,8 +347,14 @@ public class AddMeasurements extends JFrame {
 		btnSave.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
-					CRUD.SaveAll(new TimeMeasurementHeader(txtMeasurementName.getText(), txtStartTime.getText(), txtEndTime.getText()), detailList);
-					dispose();
+					if (ValidateOnSave(detailList)) {
+						TimeMeasurementHeader tmHeader = new TimeMeasurementHeader(txtMeasurementName.getText(),
+								txtStartTime.getText(), txtEndTime.getText());
+						CRUD.SaveAll(tmHeader, detailList);
+						Double mainTime = CalculateReport.CalculateReportData(detailList);
+						SaveReport.SaveReportFile(mainTime, tmHeader);
+						dispose();
+					}
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -362,8 +369,6 @@ public class AddMeasurements extends JFrame {
 		scrollPane.setBounds(25, 150, Base.WIDTH - 50, 500);
 		scrollPane.getViewport().setBackground(Color.white);
 		contentPane.add(scrollPane);
-
-		sorter = new TableRowSorter<DefaultTableModel>(defaultTableModel);
 
 		tblMain = new JTable() {
 //			public boolean isCellEditable(int row, int column) {
@@ -404,14 +409,6 @@ public class AddMeasurements extends JFrame {
 		setVisible(true);
 	}
 
-	private void SortTable() {
-		DefaultRowSorter sorter = ((DefaultRowSorter) tblMain.getRowSorter());
-		ArrayList list = new ArrayList();
-		list.add(new RowSorter.SortKey(1, SortOrder.ASCENDING));
-		sorter.setSortKeys(list);
-		sorter.sort();
-	}
-
 	private class ZaRenderer extends DefaultListCellRenderer {
 
 		@Override
@@ -425,10 +422,64 @@ public class AddMeasurements extends JFrame {
 		}
 	}
 
+	private void ClearAddMeasurement() {
+		txtFz.setText("");
+		txtFz.requestFocus();
+		txtLg.setText("");
+		txtZaCode.setText("");
+		cboZA.setSelectedIndex(0);
+		chckbxTg.setSelected(true);
+		selectedRow = -1;
+	}
+
+	private boolean ValidateNewRecord() {
+		if (txtFz.getText().isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Моля, въведете FZ.", BaseConstants.ERROR,
+					JOptionPane.INFORMATION_MESSAGE);
+			txtFz.requestFocus();
+			return false;
+		}
+
+		if (txtZaCode.getText().isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Моля, изберете ZA.", BaseConstants.ERROR,
+					JOptionPane.INFORMATION_MESSAGE);
+			txtZaCode.requestFocus();
+			return false;
+		}
+
+		if (txtLg.getText().isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Моля, въведете LG.", BaseConstants.ERROR,
+					JOptionPane.INFORMATION_MESSAGE);
+			txtLg.requestFocus();
+			return false;
+		}
+
+		return true;
+	}
+
+	private boolean ValidateOnSave(List<TimeMeasurementDetail> detailList) {
+		if (txtMeasurementName.getText().isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Моля, въведете описание.", BaseConstants.ERROR,
+					JOptionPane.INFORMATION_MESSAGE);
+			txtMeasurementName.requestFocus();
+			return false;
+		}
+
+		if (detailList.size() == 0) {
+			JOptionPane.showMessageDialog(null, "Моля, въведете измервания.", BaseConstants.ERROR,
+					JOptionPane.INFORMATION_MESSAGE);
+			txtFz.requestFocus();
+			return false;
+		}
+
+		return true;
+	}
+
 	private void SetBackgroundPicture() {
 		ImageIcon imageIcon = new ImageIcon(Base.backgroundPic);
 		lblBackground = new JLabel(imageIcon);
 		lblBackground.setBounds(0, 0, Base.WIDTH, Base.HEIGHT);
 		contentPane.add(lblBackground);
 	}
+
 }

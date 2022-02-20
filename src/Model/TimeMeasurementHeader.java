@@ -1,6 +1,8 @@
 package Model;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 import com.j256.ormlite.dao.ForeignCollection;
 import com.j256.ormlite.field.DatabaseField;
@@ -9,27 +11,27 @@ import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "tmheader")
 public class TimeMeasurementHeader {
-    @DatabaseField(generatedId = true)
-    private long id;
+	@DatabaseField(generatedId = true)
+	private long id;
 
-    @DatabaseField(canBeNull = false)
-    private String name;
-    
-    @DatabaseField(canBeNull = false)
-    private String createDate;
-    
-    @DatabaseField(canBeNull = false)
-    private String startTime;
-    
-    @DatabaseField(canBeNull = false)
-    private String endTime;
-    
-    @ForeignCollectionField(eager = false)
-    private ForeignCollection<TimeMeasurementDetail> tmDetails;
-    
-    public TimeMeasurementHeader() {
-    	
-    }
+	@DatabaseField(canBeNull = false)
+	private String name;
+
+	@DatabaseField(canBeNull = false)
+	private String createDate;
+
+	@DatabaseField(canBeNull = false)
+	private String startTime;
+
+	@DatabaseField(canBeNull = false)
+	private String endTime;
+
+	@ForeignCollectionField(eager = false)
+	private ForeignCollection<TimeMeasurementDetail> tmDetails;
+
+	public TimeMeasurementHeader() {
+
+	}
 
 	public TimeMeasurementHeader(String name, String startTime, String endTime) {
 		super();
@@ -37,6 +39,18 @@ public class TimeMeasurementHeader {
 		this.startTime = startTime;
 		this.endTime = endTime;
 		this.createDate = LocalDateTime.now().toString();
+	}
+
+	public long getDuration() {
+		if (startTime.isBlank() || endTime.isBlank()) {
+			return 0;
+		} else {
+			LocalTime stTime = LocalTime.parse(startTime);
+			LocalTime eTime = LocalTime.parse(endTime);
+			Duration duration = Duration.between(stTime, eTime);
+
+			return duration.toMinutes();
+		}
 	}
 
 	public long getId() {

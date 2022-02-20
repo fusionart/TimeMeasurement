@@ -12,6 +12,7 @@ public class SaveExcel {
 		try {
 			out = new FileOutputStream(new File(fileAddress + ".xlsx"));
 			workbook.write(out);
+			workbook.close();
 			out.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

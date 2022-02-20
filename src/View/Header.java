@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -17,6 +18,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 
 import Controller.Base;
+import Controller.BaseConstants;
 import Controller.BaseMethods;
 import Controller.Services.CRUD;
 import Controller.Services.TimeMeasurementHeaderServices;
@@ -26,6 +28,7 @@ import TableParameters.DetailTableItemModel;
 import TableParameters.HeaderTableItemModel;
 import TableParameters.OddRowColorRenderer;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
@@ -143,6 +146,8 @@ public class Header extends JFrame {
 								FillTable();
 							}
 						});
+					} else {
+						JOptionPane.showMessageDialog(null, "Моля, изберете запис.", BaseConstants.ERROR, JOptionPane.INFORMATION_MESSAGE);
 					}
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
