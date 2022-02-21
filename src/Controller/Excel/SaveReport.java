@@ -1,5 +1,7 @@
 package Controller.Excel;
 
+import java.util.HashMap;
+
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row.MissingCellPolicy;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -8,10 +10,11 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 
 import Controller.Base;
 import Controller.BaseMethods;
+import Model.PhaseDetails;
 import Model.TimeMeasurementHeader;
 
 public class SaveReport {
-	public static void SaveReportFile(Double mainTime, TimeMeasurementHeader tmHeader) {
+	public static void SaveReportFile(Double mainTime, TimeMeasurementHeader tmHeader, HashMap<Integer, PhaseDetails> sortedTmDetails) {
 		Workbook workbook = ReadExcelFile.LoadExcelFile(Base.reportTemplate);
 		XSSFSheet sheet = (XSSFSheet) workbook.getSheetAt(0);
 
@@ -46,6 +49,6 @@ public class SaveReport {
 		evaluator.clearAllCachedResultValues();
 		evaluator.evaluateAll();
 
-		SaveExcel.SaveExcelFile(workbook, Base.reportSaveAddress + tmHeader.getName());
+		SaveExcel.SaveExcelFile(workbook, Base.reportSaveAddress, tmHeader.getName());
 	}
 }

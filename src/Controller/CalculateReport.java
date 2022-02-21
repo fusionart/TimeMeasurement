@@ -1,43 +1,43 @@
 package Controller;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import Model.TimeMeasurementDetail;
+import Model.PhaseDetails;
 
 public class CalculateReport {
 
-	private static HashMap<Integer, PhaseDetails> sortedTmDetails = new HashMap<Integer, PhaseDetails>();
-
-	public static Double CalculateReportData(List<TimeMeasurementDetail> tmDetailList) {
-
+	public static HashMap<Integer, PhaseDetails> CalculateReportData(List<TimeMeasurementDetail> tmDetailList) {
+		HashMap<Integer, PhaseDetails> sortedTmDetails = new HashMap<Integer, PhaseDetails>();
+		
 		for (int i = 0; i < tmDetailList.size() - 1; i++) {
 			if (sortedTmDetails.containsKey(tmDetailList.get(i).getZaCode())) {
 				PhaseDetails phaseDetails = sortedTmDetails.get(tmDetailList.get(i).getZaCode());
 
-				phaseDetails.ez.add(tmDetailList.get(i).getFz() - tmDetailList.get(i - 1).getFz());
+				phaseDetails.addToEz(tmDetailList.get(i).getFz() - tmDetailList.get(i - 1).getFz());
 
 				sortedTmDetails.put(tmDetailList.get(i).getZaCode(), phaseDetails);
 
 			} else {
 				PhaseDetails phaseDetails = new PhaseDetails();
-				phaseDetails.lg = tmDetailList.get(i).getLg();
+				phaseDetails.setLg(tmDetailList.get(i).getLg());
+				phaseDetails.setBzm(tmDetailList.get(i).getBzm());
 
 				if (i == 0) {
-					phaseDetails.ez.add(tmDetailList.get(i).getFz());
+					phaseDetails.addToEz(tmDetailList.get(i).getFz());
 				} else {
-					phaseDetails.ez.add(tmDetailList.get(i).getFz() - tmDetailList.get(i - 1).getFz());
+					phaseDetails.addToEz(tmDetailList.get(i).getFz() - tmDetailList.get(i - 1).getFz());
 				}
 				sortedTmDetails.put(tmDetailList.get(i).getZaCode(), phaseDetails);
 			}
 		}
 
-		return CalculateMainTime();
+		return sortedTmDetails;
 	}
 
-	private static Double CalculateMainTime() {
+	public static Double CalculateMainTime(HashMap<Integer, PhaseDetails> sortedTmDetails) {
 		Double mainTime = 0.0;
 		for (Map.Entry<Integer, PhaseDetails> set : sortedTmDetails.entrySet()) {
 
@@ -52,17 +52,15 @@ public class CalculateReport {
 
 	private static Double CalculateSzBzm(PhaseDetails phaseDetails) {
 
-		List<Integer> ez = phaseDetails.ez;
-		int count = 0;
+		List<Integer> ez = phaseDetails.getEz();
 		int sumEz = 0;
 		Double szBzm = 0.0;
 
 		for (Integer integer : ez) {
 			sumEz += integer;
-			count++;
 		}
 
-		szBzm = (double) sumEz * phaseDetails.lg / 100 / count;
+		szBzm = (double) sumEz * phaseDetails.getLg() / 100 / phaseDetails.getBzm();
 
 		// round to third decimal
 		szBzm = szBzm * 1000;
@@ -71,9 +69,4 @@ public class CalculateReport {
 		
 		return szBzm;
 	}
-}
-
-class PhaseDetails {
-	int lg;
-	List<Integer> ez = new ArrayList<>();
 }

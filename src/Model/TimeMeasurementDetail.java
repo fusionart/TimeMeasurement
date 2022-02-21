@@ -18,6 +18,9 @@ public class TimeMeasurementDetail {
     private int lg;
     
     @DatabaseField(canBeNull = false)
+    private int bzm;
+    
+    @DatabaseField(canBeNull = false)
     private Boolean tg;
     
     @DatabaseField(canBeNull = false)
@@ -27,13 +30,14 @@ public class TimeMeasurementDetail {
 
 	}
 
-	public TimeMeasurementDetail(TimeMeasurementHeader tmHeader, int fz, int lg, Boolean tg, int zaCode) {
+	public TimeMeasurementDetail(TimeMeasurementHeader tmHeader, int fz, int lg, Boolean tg, int zaCode, int bzm) {
 		super();
 		this.tmHeader = tmHeader;
 		this.fz = fz;
 		this.lg = lg;
 		this.tg = tg;
 		this.zaCode = zaCode;
+		this.bzm = bzm;
 	}
 
 	public TimeMeasurementHeader getTmHeader() {
@@ -58,6 +62,14 @@ public class TimeMeasurementDetail {
 
 	public void setLg(int lg) {
 		this.lg = lg;
+	}
+
+	public int getBzm() {
+		return bzm;
+	}
+
+	public void setBzm(int bzm) {
+		this.bzm = bzm;
 	}
 
 	public Boolean getTg() {

@@ -5,6 +5,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.JFrame;
@@ -23,6 +24,7 @@ import Controller.CalculateReport;
 import Controller.Excel.LoadZaFile;
 import Controller.Excel.SaveReport;
 import Controller.Services.CRUD;
+import Model.PhaseDetails;
 import Model.TimeMeasurementDetail;
 import Model.TimeMeasurementHeader;
 import Model.ZA;
@@ -74,6 +76,7 @@ public class AddMeasurements extends JFrame {
 	private JTextField txtEndTime;
 	private JComboBox<ZA> cboZA;
 	private JCheckBox chckbxTg;
+	private JTextField txtBzm;
 
 	/**
 	 * Create the frame.
@@ -113,9 +116,9 @@ public class AddMeasurements extends JFrame {
 		pnlMeasurementData.setBackground(new Color(255, 255, 255, 200));
 		contentPane.add(pnlMeasurementData);
 		GridBagLayout gbl_pnlMeasurementData = new GridBagLayout();
-		gbl_pnlMeasurementData.columnWidths = new int[] { 50, 100, 50, 100, 110, 400, 50, 100, 50, 50, 100, 0 };
+		gbl_pnlMeasurementData.columnWidths = new int[] { 50, 80, 50, 80, 115, 400, 50, 80, 50, 50, 80, 50, 80, 0 };
 		gbl_pnlMeasurementData.rowHeights = new int[] { 35, 0 };
-		gbl_pnlMeasurementData.columnWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+		gbl_pnlMeasurementData.columnWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 				Double.MIN_VALUE };
 		gbl_pnlMeasurementData.rowWeights = new double[] { 1.0, Double.MIN_VALUE };
 		pnlMeasurementData.setLayout(gbl_pnlMeasurementData);
@@ -210,20 +213,41 @@ public class AddMeasurements extends JFrame {
 		chckbxTg.setSelected(true);
 		chckbxTg.setHorizontalAlignment(SwingConstants.LEFT);
 		chckbxTg.setBackground(new Color(255, 255, 255, 200));
+		
+		JLabel lblBzm = new JLabel("BZM");
+		GridBagConstraints gbc_lblBzm = new GridBagConstraints();
+		gbc_lblBzm.anchor = GridBagConstraints.WEST;
+		gbc_lblBzm.insets = new Insets(0, 0, 0, 5);
+		gbc_lblBzm.gridx = 9;
+		gbc_lblBzm.gridy = 0;
+		pnlMeasurementData.add(lblBzm, gbc_lblBzm);
+		lblBzm.setFont(Base.DEFAULT_FONT);
+		
+		txtBzm = new JTextField();
+		txtBzm.setText("10");
+		GridBagConstraints gbc_txtBzm = new GridBagConstraints();
+		gbc_txtBzm.insets = new Insets(0, 0, 0, 5);
+		gbc_txtBzm.fill = GridBagConstraints.BOTH;
+		gbc_txtBzm.gridx = 10;
+		gbc_txtBzm.gridy = 0;
+		pnlMeasurementData.add(txtBzm, gbc_txtBzm);
+		txtBzm.setFont(Base.DEFAULT_FONT);
 
 		JLabel lblLg = new JLabel("LG");
 		GridBagConstraints gbc_lblLg = new GridBagConstraints();
 		gbc_lblLg.fill = GridBagConstraints.HORIZONTAL;
 		gbc_lblLg.insets = new Insets(0, 0, 0, 5);
-		gbc_lblLg.gridx = 9;
+		gbc_lblLg.gridx = 11;
 		gbc_lblLg.gridy = 0;
 		pnlMeasurementData.add(lblLg, gbc_lblLg);
 		lblLg.setFont(Base.DEFAULT_FONT);
 
 		txtLg = new JTextField();
+		txtLg.setToolTipText("Натиснете TAB за да въведете записа");
+		txtLg.setText("100");
 		GridBagConstraints gbc_txtLg = new GridBagConstraints();
 		gbc_txtLg.fill = GridBagConstraints.BOTH;
-		gbc_txtLg.gridx = 10;
+		gbc_txtLg.gridx = 12;
 		gbc_txtLg.gridy = 0;
 		pnlMeasurementData.add(txtLg, gbc_txtLg);
 		txtLg.addFocusListener(new FocusAdapter() {
@@ -236,9 +260,10 @@ public class AddMeasurements extends JFrame {
 						int fz = Integer.parseInt(txtFz.getText());
 						int lg = Integer.parseInt(txtLg.getText());
 						int zaCode = Integer.parseInt(txtZaCode.getText());
+						int bzm = Integer.parseInt(txtBzm.getText());
 
 						TimeMeasurementDetail tmDetail = new TimeMeasurementDetail(null, fz, lg, chckbxTg.isSelected(),
-								zaCode);
+								zaCode, bzm);
 						detailList.add(tmDetail);
 
 						detailList.sort(Comparator.comparing(TimeMeasurementDetail::getFz));
@@ -351,8 +376,9 @@ public class AddMeasurements extends JFrame {
 						TimeMeasurementHeader tmHeader = new TimeMeasurementHeader(txtMeasurementName.getText(),
 								txtStartTime.getText(), txtEndTime.getText());
 						CRUD.SaveAll(tmHeader, detailList);
-						Double mainTime = CalculateReport.CalculateReportData(detailList);
-						SaveReport.SaveReportFile(mainTime, tmHeader);
+						HashMap<Integer, PhaseDetails> sortedTmDetails = CalculateReport.CalculateReportData(detailList);
+						Double mainTime = CalculateReport.CalculateMainTime(sortedTmDetails);
+						SaveReport.SaveReportFile(mainTime, tmHeader, sortedTmDetails);
 						dispose();
 					}
 				} catch (Exception e) {
@@ -425,7 +451,8 @@ public class AddMeasurements extends JFrame {
 	private void ClearAddMeasurement() {
 		txtFz.setText("");
 		txtFz.requestFocus();
-		txtLg.setText("");
+		txtLg.setText("100");
+		txtBzm.setText("10");
 		txtZaCode.setText("");
 		cboZA.setSelectedIndex(0);
 		chckbxTg.setSelected(true);
@@ -481,5 +508,4 @@ public class AddMeasurements extends JFrame {
 		lblBackground.setBounds(0, 0, Base.WIDTH, Base.HEIGHT);
 		contentPane.add(lblBackground);
 	}
-
 }
