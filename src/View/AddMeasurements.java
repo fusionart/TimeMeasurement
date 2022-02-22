@@ -118,8 +118,8 @@ public class AddMeasurements extends JFrame {
 		GridBagLayout gbl_pnlMeasurementData = new GridBagLayout();
 		gbl_pnlMeasurementData.columnWidths = new int[] { 50, 80, 50, 80, 115, 400, 50, 80, 50, 50, 80, 50, 80, 0 };
 		gbl_pnlMeasurementData.rowHeights = new int[] { 35, 0 };
-		gbl_pnlMeasurementData.columnWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-				Double.MIN_VALUE };
+		gbl_pnlMeasurementData.columnWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+				0.0, 0.0, Double.MIN_VALUE };
 		gbl_pnlMeasurementData.rowWeights = new double[] { 1.0, Double.MIN_VALUE };
 		pnlMeasurementData.setLayout(gbl_pnlMeasurementData);
 
@@ -151,6 +151,26 @@ public class AddMeasurements extends JFrame {
 		lblCode.setFont(Base.DEFAULT_FONT);
 
 		txtZaCode = new JTextField();
+		txtZaCode.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusLost(FocusEvent e) {
+				if (!txtZaCode.getText().isBlank()) {
+					ZA za = zaList.stream().filter(zaItem -> Integer.parseInt(txtZaCode.getText()) == zaItem.getCode())
+							.findAny().orElse(null);
+
+					if (za != null) {
+						txtZaType.setText(za.getType());
+						//int test = zaList.indexOf(za);
+						cboZA.setSelectedIndex(zaList.indexOf(za));
+					} else {
+						JOptionPane.showMessageDialog(null, "Кодът не е намерен.", BaseConstants.ERROR,
+								JOptionPane.INFORMATION_MESSAGE);
+						txtZaCode.setText("");
+						txtZaCode.requestFocus();
+					}
+				}
+			}
+		});
 		GridBagConstraints gbc_txtZaCode = new GridBagConstraints();
 		gbc_txtZaCode.fill = GridBagConstraints.BOTH;
 		gbc_txtZaCode.insets = new Insets(0, 0, 0, 5);
@@ -213,7 +233,7 @@ public class AddMeasurements extends JFrame {
 		chckbxTg.setSelected(true);
 		chckbxTg.setHorizontalAlignment(SwingConstants.LEFT);
 		chckbxTg.setBackground(new Color(255, 255, 255, 200));
-		
+
 		JLabel lblBzm = new JLabel("BZM");
 		GridBagConstraints gbc_lblBzm = new GridBagConstraints();
 		gbc_lblBzm.anchor = GridBagConstraints.WEST;
@@ -222,9 +242,9 @@ public class AddMeasurements extends JFrame {
 		gbc_lblBzm.gridy = 0;
 		pnlMeasurementData.add(lblBzm, gbc_lblBzm);
 		lblBzm.setFont(Base.DEFAULT_FONT);
-		
+
 		txtBzm = new JTextField();
-		txtBzm.setText("10");
+		txtBzm.setText("1");
 		GridBagConstraints gbc_txtBzm = new GridBagConstraints();
 		gbc_txtBzm.insets = new Insets(0, 0, 0, 5);
 		gbc_txtBzm.fill = GridBagConstraints.BOTH;
@@ -376,7 +396,8 @@ public class AddMeasurements extends JFrame {
 						TimeMeasurementHeader tmHeader = new TimeMeasurementHeader(txtMeasurementName.getText(),
 								txtStartTime.getText(), txtEndTime.getText());
 						CRUD.SaveAll(tmHeader, detailList);
-						HashMap<Integer, PhaseDetails> sortedTmDetails = CalculateReport.CalculateReportData(detailList);
+						HashMap<Integer, PhaseDetails> sortedTmDetails = CalculateReport
+								.CalculateReportData(detailList);
 						Double mainTime = CalculateReport.CalculateMainTime(sortedTmDetails);
 						SaveReport.SaveReportFile(mainTime, tmHeader, sortedTmDetails);
 						dispose();
@@ -452,7 +473,7 @@ public class AddMeasurements extends JFrame {
 		txtFz.setText("");
 		txtFz.requestFocus();
 		txtLg.setText("100");
-		txtBzm.setText("10");
+		txtBzm.setText("1");
 		txtZaCode.setText("");
 		cboZA.setSelectedIndex(0);
 		chckbxTg.setSelected(true);

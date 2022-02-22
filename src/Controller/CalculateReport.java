@@ -56,8 +56,8 @@ public class CalculateReport {
 		int sumEz = 0;
 		Double szBzm = 0.0;
 
-		for (Integer integer : ez) {
-			sumEz += integer;
+		for (Integer time : ez) {
+			sumEz += time;
 		}
 
 		szBzm = (double) sumEz * phaseDetails.getLg() / 100 / phaseDetails.getBzm();

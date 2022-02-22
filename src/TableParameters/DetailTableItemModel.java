@@ -48,10 +48,10 @@ public class DetailTableItemModel extends AbstractTableModel {
 			value = tmDetail.getZaCode();
 			break;
 		case 1:
-			value = zaList.get(tmDetail.getZaCode() - 1).getDesc_bg();
+			value = FindZa(tmDetail.getZaCode()).getDesc_bg();
 			break;
 		case 2:
-			value = zaList.get(tmDetail.getZaCode() - 1).getType();
+			value = FindZa(tmDetail.getZaCode()).getType();
 			break;
 		case 3:
 			value = tmDetail.getFz();
@@ -68,6 +68,11 @@ public class DetailTableItemModel extends AbstractTableModel {
 		}
 
 		return value;
+	}
+	
+	private ZA FindZa(int zaCode) {
+		ZA za = zaList.stream().filter(zaItem -> zaCode == zaItem.getCode()).findAny().orElse(null);
+		return za;
 	}
 
 	private int CalculateEz(int detailFz) {
