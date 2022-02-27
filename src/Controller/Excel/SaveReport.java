@@ -12,20 +12,35 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 
 import Controller.Base;
 import Controller.BaseMethods;
+import Controller.CalculateReport;
 import Model.PhaseDetails;
+import Model.TimeMeasurementDetail;
 import Model.TimeMeasurementHeader;
 import Model.ZA;
 
 public class SaveReport {
-	public static void SaveReportFile(Double mainTime, TimeMeasurementHeader tmHeader,
-			HashMap<Integer, PhaseDetails> sortedTmDetails) {
+	private TimeMeasurementHeader tmHeader; 
+	private List<TimeMeasurementDetail> detailList;
+	private List<ZA> zaList;
+	
+	public SaveReport(TimeMeasurementHeader tmHeader, List<TimeMeasurementDetail> detailList) {
+		this.tmHeader = tmHeader;
+		this.detailList = detailList;
+		LoadZaFile loadZaFile = LoadZaFile.getInstance();
+		this.zaList = loadZaFile.getAllRows();
+	}
+
+	public void saveReportFile() {
 		Workbook workbook = ReadExcelFile.LoadExcelFile(Base.reportTemplate);
 		XSSFSheet sheet = (XSSFSheet) workbook.getSheetAt(0);
 
 		FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
 
-		FillFirstPage(sheet, mainTime, tmHeader);
-		FillSecondPage(sheet, sortedTmDetails);
+		HashMap<Integer, PhaseDetails> sortedTmDetails = CalculateReport.calculateReportData(detailList);
+		double mainTime = CalculateReport.calculateMainTime(sortedTmDetails);
+
+		fillFirstPage(sheet, mainTime, tmHeader);
+		fillSecondPage(sheet, sortedTmDetails);
 
 		evaluator.clearAllCachedResultValues();
 		evaluator.evaluateAll();
@@ -33,9 +48,8 @@ public class SaveReport {
 		SaveExcel.SaveExcelFile(workbook, Base.reportSaveAddress, tmHeader.getName());
 	}
 
-	private static void FillSecondPage(XSSFSheet sheet, HashMap<Integer, PhaseDetails> sortedTmDetails) {
+	private void fillSecondPage(XSSFSheet sheet, HashMap<Integer, PhaseDetails> sortedTmDetails) {
 		XSSFCell cellToUpdate;
-		List<ZA> zaList = LoadZaFile.LoadZA();
 		PhaseDetails phaseDetails = new PhaseDetails();
 		int row = 76;
 
@@ -48,10 +62,10 @@ public class SaveReport {
 				continue;
 			}
 
-			int calculatedEz = CalculateEz(phaseDetails.getEz());
-			Double calculatedSz = CalculateSz(phaseDetails, calculatedEz);
-			Double calculatedSzBzm = calculatedSz / phaseDetails.getBzm();
-			Double calculatedTeTr;
+			int calculatedEz = calculateEz(phaseDetails.getEz());
+			double calculatedSz = calculateSz(phaseDetails, calculatedEz);
+			double calculatedSzBzm = calculatedSz / phaseDetails.getBzm();
+			double calculatedTeTr;
 
 			if (za.getType().substring(0, 1).equals("t")) {
 				calculatedTeTr = calculatedSzBzm + calculatedSzBzm * 0.1;
@@ -105,7 +119,7 @@ public class SaveReport {
 		}
 	}
 
-	private static void FillFirstPage(XSSFSheet sheet, Double mainTime, TimeMeasurementHeader tmHeader) {
+	private static void fillFirstPage(XSSFSheet sheet, double mainTime, TimeMeasurementHeader tmHeader) {
 		XSSFCell cellToUpdate;
 		// set main time
 		cellToUpdate = sheet.getRow(14).getCell(29, MissingCellPolicy.CREATE_NULL_AS_BLANK);
@@ -117,7 +131,7 @@ public class SaveReport {
 
 		// set date
 		cellToUpdate = sheet.getRow(6).getCell(7, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-		cellToUpdate.setCellValue(BaseMethods.ExtractDate(tmHeader.getCreateDate()));
+		cellToUpdate.setCellValue(BaseMethods.extractDate(tmHeader.getCreateDate()));
 
 		// set begin time
 		cellToUpdate = sheet.getRow(6).getCell(16, MissingCellPolicy.CREATE_NULL_AS_BLANK);
@@ -132,9 +146,9 @@ public class SaveReport {
 		cellToUpdate.setCellValue(tmHeader.getDuration());
 	}
 
-	private static Double CalculateSz(PhaseDetails phaseDetails, int calculatedEz) {
+	private static double calculateSz(PhaseDetails phaseDetails, int calculatedEz) {
 
-		Double szBzm = 0.0;
+		double szBzm = 0.0;
 
 		szBzm = (double) calculatedEz * phaseDetails.getLg() / 100;
 
@@ -146,7 +160,7 @@ public class SaveReport {
 		return szBzm;
 	}
 
-	private static int CalculateEz(List<Integer> ez) {
+	private static int calculateEz(List<Integer> ez) {
 		int sumEz = 0;
 
 		for (Integer time : ez) {

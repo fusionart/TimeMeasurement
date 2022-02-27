@@ -5,7 +5,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.JFrame;
@@ -20,11 +19,10 @@ import javax.swing.border.EtchedBorder;
 import Controller.Base;
 import Controller.BaseConstants;
 import Controller.BaseMethods;
-import Controller.CalculateReport;
+import Controller.IntFormatter;
 import Controller.Excel.LoadZaFile;
 import Controller.Excel.SaveReport;
 import Controller.Services.CRUD;
-import Model.PhaseDetails;
 import Model.TimeMeasurementDetail;
 import Model.TimeMeasurementHeader;
 import Model.ZA;
@@ -34,7 +32,9 @@ import TableParameters.OddRowColorRenderer;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.ImageIcon;
+import javax.swing.InputVerifier;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -49,6 +49,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.border.TitledBorder;
+import javax.swing.text.PlainDocument;
+
+import com.github.lgooddatepicker.components.TimePicker;
+import com.github.lgooddatepicker.components.TimePickerSettings;
 
 import java.awt.GridBagLayout;
 import java.awt.Image;
@@ -72,7 +76,7 @@ public class AddMeasurements extends JFrame {
 	private static JTable tblMain;
 
 	private JTextField txtLg;
-	private JTextField txtStartTime;
+	// private JTextField txtStartTime;
 	private JTextField txtEndTime;
 	private JComboBox<ZA> cboZA;
 	private JCheckBox chckbxTg;
@@ -87,12 +91,12 @@ public class AddMeasurements extends JFrame {
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		Image frameIcon = Toolkit.getDefaultToolkit().getImage(Base.icon);
 		setIconImage(frameIcon);
-		setTitle(Base.FRAME_CAPTION);
+		setTitle(BaseConstants.FRAME_CAPTION);
 		setResizable(false);
 
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-		contentPane.setPreferredSize(new Dimension(Base.WIDTH, Base.HEIGHT));
+		contentPane.setPreferredSize(new Dimension(BaseConstants.WIDTH, BaseConstants.HEIGHT));
 		getContentPane().add(contentPane);
 		contentPane.setLayout(null);
 
@@ -100,7 +104,8 @@ public class AddMeasurements extends JFrame {
 		setLocationRelativeTo(null);
 		contentPane.setLayout(null);
 
-		List<ZA> zaList = LoadZaFile.LoadZA();
+		LoadZaFile loadZaFile = LoadZaFile.getInstance();
+		List<ZA> zaList = loadZaFile.getAllRows();
 
 		JPanel pnlMeasurementData = new JPanel() {
 			protected void paintComponent(Graphics g) {
@@ -130,16 +135,19 @@ public class AddMeasurements extends JFrame {
 		gbc_lblFz.gridx = 0;
 		gbc_lblFz.gridy = 0;
 		pnlMeasurementData.add(lblFz, gbc_lblFz);
-		lblFz.setFont(Base.DEFAULT_FONT);
+		lblFz.setFont(BaseConstants.DEFAULT_FONT);
 
 		txtFz = new JTextField();
+		PlainDocument txtFzDoc = (PlainDocument) txtFz.getDocument();
+		txtFzDoc.setDocumentFilter(new IntFormatter());
 		GridBagConstraints gbc_txtFz = new GridBagConstraints();
 		gbc_txtFz.fill = GridBagConstraints.BOTH;
 		gbc_txtFz.insets = new Insets(0, 0, 0, 5);
 		gbc_txtFz.gridx = 1;
 		gbc_txtFz.gridy = 0;
 		pnlMeasurementData.add(txtFz, gbc_txtFz);
-		txtFz.setFont(Base.DEFAULT_FONT);
+		txtFz.setFont(BaseConstants.DEFAULT_FONT);
+		txtFz.setInputVerifier(new TextVerifier());
 
 		JLabel lblCode = new JLabel("Код");
 		GridBagConstraints gbc_lblCode = new GridBagConstraints();
@@ -148,24 +156,25 @@ public class AddMeasurements extends JFrame {
 		gbc_lblCode.gridx = 2;
 		gbc_lblCode.gridy = 0;
 		pnlMeasurementData.add(lblCode, gbc_lblCode);
-		lblCode.setFont(Base.DEFAULT_FONT);
+		lblCode.setFont(BaseConstants.DEFAULT_FONT);
 
 		txtZaCode = new JTextField();
+		PlainDocument txtZaCodeDoc = (PlainDocument) txtZaCode.getDocument();
+		txtZaCodeDoc.setDocumentFilter(new IntFormatter());
 		txtZaCode.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
-				if (!txtZaCode.getText().isBlank()) {
+				if (!txtZaCode.getText().isEmpty()) {
+
 					ZA za = zaList.stream().filter(zaItem -> Integer.parseInt(txtZaCode.getText()) == zaItem.getCode())
 							.findAny().orElse(null);
-
 					if (za != null) {
 						txtZaType.setText(za.getType());
-						//int test = zaList.indexOf(za);
 						cboZA.setSelectedIndex(zaList.indexOf(za));
 					} else {
 						JOptionPane.showMessageDialog(null, "Кодът не е намерен.", BaseConstants.ERROR,
 								JOptionPane.INFORMATION_MESSAGE);
-						txtZaCode.setText("");
+						txtZaCode.setText("0");
 						txtZaCode.requestFocus();
 					}
 				}
@@ -177,7 +186,8 @@ public class AddMeasurements extends JFrame {
 		gbc_txtZaCode.gridx = 3;
 		gbc_txtZaCode.gridy = 0;
 		pnlMeasurementData.add(txtZaCode, gbc_txtZaCode);
-		txtZaCode.setFont(Base.DEFAULT_FONT);
+		txtZaCode.setFont(BaseConstants.DEFAULT_FONT);
+		txtZaCode.setInputVerifier(new TextVerifier());
 
 		JLabel lblDesc = new JLabel("Описание ZA");
 		GridBagConstraints gbc_lblDesc = new GridBagConstraints();
@@ -186,7 +196,7 @@ public class AddMeasurements extends JFrame {
 		gbc_lblDesc.gridx = 4;
 		gbc_lblDesc.gridy = 0;
 		pnlMeasurementData.add(lblDesc, gbc_lblDesc);
-		lblDesc.setFont(Base.DEFAULT_FONT);
+		lblDesc.setFont(BaseConstants.DEFAULT_FONT);
 
 		cboZA = new JComboBox<ZA>();
 		GridBagConstraints gbc_cboZA = new GridBagConstraints();
@@ -197,7 +207,8 @@ public class AddMeasurements extends JFrame {
 		pnlMeasurementData.add(cboZA, gbc_cboZA);
 		cboZA.setModel(new DefaultComboBoxModel<ZA>(zaList.toArray(new ZA[0])));
 		cboZA.setRenderer(new ZaRenderer());
-		cboZA.setFont(Base.DEFAULT_FONT);
+		cboZA.setSelectedIndex(-1);
+		cboZA.setFont(BaseConstants.DEFAULT_FONT);
 		cboZA.addItemListener(e -> {
 			ZA za = (ZA) e.getItem();
 			txtZaCode.setText(String.valueOf(za.getCode()));
@@ -211,7 +222,7 @@ public class AddMeasurements extends JFrame {
 		gbc_lblZa.gridx = 6;
 		gbc_lblZa.gridy = 0;
 		pnlMeasurementData.add(lblZa, gbc_lblZa);
-		lblZa.setFont(Base.DEFAULT_FONT);
+		lblZa.setFont(BaseConstants.DEFAULT_FONT);
 
 		txtZaType = new JTextField();
 		GridBagConstraints gbc_txtZaType = new GridBagConstraints();
@@ -220,7 +231,8 @@ public class AddMeasurements extends JFrame {
 		gbc_txtZaType.gridx = 7;
 		gbc_txtZaType.gridy = 0;
 		pnlMeasurementData.add(txtZaType, gbc_txtZaType);
-		txtZaType.setFont(Base.DEFAULT_FONT);
+		txtZaType.setFont(BaseConstants.DEFAULT_FONT);
+		txtZaType.setEditable(false);
 
 		chckbxTg = new JCheckBox("TG");
 		GridBagConstraints gbc_chckbxTg = new GridBagConstraints();
@@ -229,7 +241,7 @@ public class AddMeasurements extends JFrame {
 		gbc_chckbxTg.gridx = 8;
 		gbc_chckbxTg.gridy = 0;
 		pnlMeasurementData.add(chckbxTg, gbc_chckbxTg);
-		chckbxTg.setFont(Base.DEFAULT_FONT);
+		chckbxTg.setFont(BaseConstants.DEFAULT_FONT);
 		chckbxTg.setSelected(true);
 		chckbxTg.setHorizontalAlignment(SwingConstants.LEFT);
 		chckbxTg.setBackground(new Color(255, 255, 255, 200));
@@ -241,17 +253,21 @@ public class AddMeasurements extends JFrame {
 		gbc_lblBzm.gridx = 9;
 		gbc_lblBzm.gridy = 0;
 		pnlMeasurementData.add(lblBzm, gbc_lblBzm);
-		lblBzm.setFont(Base.DEFAULT_FONT);
+		lblBzm.setFont(BaseConstants.DEFAULT_FONT);
 
 		txtBzm = new JTextField();
-		txtBzm.setText("1");
+		txtBzm.setText(BaseConstants.DEFAULT_BZM);
 		GridBagConstraints gbc_txtBzm = new GridBagConstraints();
 		gbc_txtBzm.insets = new Insets(0, 0, 0, 5);
 		gbc_txtBzm.fill = GridBagConstraints.BOTH;
 		gbc_txtBzm.gridx = 10;
 		gbc_txtBzm.gridy = 0;
 		pnlMeasurementData.add(txtBzm, gbc_txtBzm);
-		txtBzm.setFont(Base.DEFAULT_FONT);
+		txtBzm.setFont(BaseConstants.DEFAULT_FONT);
+		txtBzm.setInputVerifier(new TextVerifier());
+
+		PlainDocument txtBzmDoc = (PlainDocument) txtBzm.getDocument();
+		txtBzmDoc.setDocumentFilter(new IntFormatter());
 
 		JLabel lblLg = new JLabel("LG");
 		GridBagConstraints gbc_lblLg = new GridBagConstraints();
@@ -260,11 +276,11 @@ public class AddMeasurements extends JFrame {
 		gbc_lblLg.gridx = 11;
 		gbc_lblLg.gridy = 0;
 		pnlMeasurementData.add(lblLg, gbc_lblLg);
-		lblLg.setFont(Base.DEFAULT_FONT);
+		lblLg.setFont(BaseConstants.DEFAULT_FONT);
 
 		txtLg = new JTextField();
 		txtLg.setToolTipText("Натиснете TAB за да въведете записа");
-		txtLg.setText("100");
+		txtLg.setText(BaseConstants.DEFAULT_LG);
 		GridBagConstraints gbc_txtLg = new GridBagConstraints();
 		gbc_txtLg.fill = GridBagConstraints.BOTH;
 		gbc_txtLg.gridx = 12;
@@ -276,7 +292,7 @@ public class AddMeasurements extends JFrame {
 				selectedRow = tblMain.getSelectedRow();
 
 				if (selectedRow == -1) {
-					if (ValidateNewRecord()) {
+					if (validateNewRecord()) {
 						int fz = Integer.parseInt(txtFz.getText());
 						int lg = Integer.parseInt(txtLg.getText());
 						int zaCode = Integer.parseInt(txtZaCode.getText());
@@ -289,11 +305,11 @@ public class AddMeasurements extends JFrame {
 						detailList.sort(Comparator.comparing(TimeMeasurementDetail::getFz));
 
 						tiModel.addRow(tmDetail);
-						BaseMethods.ResizeColumnWidth(tblMain);
-						ClearAddMeasurement();
+						BaseMethods.resizeColumnWidth(tblMain);
+						clearAddMeasurement();
 					}
 				} else {
-					if (ValidateNewRecord()) {
+					if (validateNewRecord()) {
 						TimeMeasurementDetail tmDetail = tiModel.getDetailAt(tblMain.getSelectedRow());
 						int getIndex = detailList.indexOf(tmDetail);
 
@@ -305,12 +321,16 @@ public class AddMeasurements extends JFrame {
 						detailList.set(getIndex, tmDetail);
 
 						tiModel.fireTableRowsUpdated(selectedRow, selectedRow);
-						ClearAddMeasurement();
+						clearAddMeasurement();
 					}
 				}
 			}
 		});
-		txtLg.setFont(Base.DEFAULT_FONT);
+		txtLg.setFont(BaseConstants.DEFAULT_FONT);
+		txtLg.setInputVerifier(new TextVerifier());
+
+		PlainDocument txtLgDoc = (PlainDocument) txtLg.getDocument();
+		txtLgDoc.setDocumentFilter(new IntFormatter());
 
 		JPanel pnlMeasurement = new JPanel() {
 			protected void paintComponent(Graphics g) {
@@ -339,7 +359,7 @@ public class AddMeasurements extends JFrame {
 		gbc_lblMeasurementName.gridx = 0;
 		gbc_lblMeasurementName.gridy = 0;
 		pnlMeasurement.add(lblMeasurementName, gbc_lblMeasurementName);
-		lblMeasurementName.setFont(Base.DEFAULT_FONT);
+		lblMeasurementName.setFont(BaseConstants.DEFAULT_FONT);
 
 		txtMeasurementName = new JTextField();
 		GridBagConstraints gbc_txtMeasurementName = new GridBagConstraints();
@@ -348,7 +368,7 @@ public class AddMeasurements extends JFrame {
 		gbc_txtMeasurementName.gridx = 1;
 		gbc_txtMeasurementName.gridy = 0;
 		pnlMeasurement.add(txtMeasurementName, gbc_txtMeasurementName);
-		txtMeasurementName.setFont(Base.DEFAULT_FONT);
+		txtMeasurementName.setFont(BaseConstants.DEFAULT_FONT);
 
 		JLabel lblStartTime = new JLabel("Начало, час");
 		GridBagConstraints gbc_lblStartTime = new GridBagConstraints();
@@ -357,16 +377,26 @@ public class AddMeasurements extends JFrame {
 		gbc_lblStartTime.gridx = 2;
 		gbc_lblStartTime.gridy = 0;
 		pnlMeasurement.add(lblStartTime, gbc_lblStartTime);
-		lblStartTime.setFont(Base.DEFAULT_FONT);
+		lblStartTime.setFont(BaseConstants.DEFAULT_FONT);
 
-		txtStartTime = new JTextField();
+		TimePickerSettings timeSettings;
+
+		timeSettings = new TimePickerSettings();
+		timeSettings.setFormatForDisplayTime("hh:mm");
+		timeSettings.setFormatForMenuTimes("hh:mm");
+		// timeSettings.setColor(TimeArea.TextFieldBackgroundValidTime, Color.cyan);
+		// timeSettings.setDisplayToggleTimeMenuButton(false);
+		timeSettings.setDisplaySpinnerButtons(true);
+		timeSettings.setInitialTimeToNow();
+
+		TimePicker txtStartTime = new TimePicker(timeSettings);
 		GridBagConstraints gbc_txtStartTime = new GridBagConstraints();
 		gbc_txtStartTime.insets = new Insets(0, 0, 0, 5);
 		gbc_txtStartTime.fill = GridBagConstraints.BOTH;
 		gbc_txtStartTime.gridx = 3;
 		gbc_txtStartTime.gridy = 0;
 		pnlMeasurement.add(txtStartTime, gbc_txtStartTime);
-		txtStartTime.setFont(Base.DEFAULT_FONT);
+		txtStartTime.setFont(BaseConstants.DEFAULT_FONT);
 
 		JLabel lblEndTime = new JLabel("Край, час");
 		GridBagConstraints gbc_lblEndTime = new GridBagConstraints();
@@ -375,31 +405,34 @@ public class AddMeasurements extends JFrame {
 		gbc_lblEndTime.gridx = 4;
 		gbc_lblEndTime.gridy = 0;
 		pnlMeasurement.add(lblEndTime, gbc_lblEndTime);
-		lblEndTime.setFont(Base.DEFAULT_FONT);
+		lblEndTime.setFont(BaseConstants.DEFAULT_FONT);
 
-		txtEndTime = new JTextField();
+		TimePicker txtEndTime = new TimePicker(timeSettings);
 		GridBagConstraints gbc_txtEndTime = new GridBagConstraints();
 		gbc_txtEndTime.fill = GridBagConstraints.BOTH;
 		gbc_txtEndTime.gridx = 5;
 		gbc_txtEndTime.gridy = 0;
 		pnlMeasurement.add(txtEndTime, gbc_txtEndTime);
-		txtEndTime.setFont(Base.DEFAULT_FONT);
+		txtEndTime.setFont(BaseConstants.DEFAULT_FONT);
 
 		JButton btnSave = new JButton("Запази");
 		btnSave.setForeground(Color.WHITE);
-		btnSave.setBackground(Base.BUTTON_COLOR);
-		btnSave.setFont(Base.DEFAULT_FONT);
+		btnSave.setBackground(BaseConstants.BUTTON_COLOR);
+		btnSave.setFont(BaseConstants.DEFAULT_FONT);
 		btnSave.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
-					if (ValidateOnSave(detailList)) {
+					if (validateOnSave(detailList)) {
 						TimeMeasurementHeader tmHeader = new TimeMeasurementHeader(txtMeasurementName.getText(),
 								txtStartTime.getText(), txtEndTime.getText());
-						CRUD.SaveAll(tmHeader, detailList);
-						HashMap<Integer, PhaseDetails> sortedTmDetails = CalculateReport
-								.CalculateReportData(detailList);
-						Double mainTime = CalculateReport.CalculateMainTime(sortedTmDetails);
-						SaveReport.SaveReportFile(mainTime, tmHeader, sortedTmDetails);
+						CRUD.saveAll(tmHeader, detailList);
+
+						SaveReport saveReport = new SaveReport(tmHeader, detailList);
+						saveReport.saveReportFile();
+
+						JOptionPane.showMessageDialog(null, "Репорт " + tmHeader.getName() + " е успешно генериран.",
+								BaseConstants.REPORT, JOptionPane.INFORMATION_MESSAGE);
+
 						dispose();
 					}
 				} catch (Exception e) {
@@ -408,12 +441,12 @@ public class AddMeasurements extends JFrame {
 				}
 			}
 		});
-		btnSave.setBounds(1116, 706, Base.BUTTON_WIDTH, Base.BUTTON_HEIGHT);
+		btnSave.setBounds(1116, 706, BaseConstants.BUTTON_WIDTH, BaseConstants.BUTTON_HEIGHT);
 		contentPane.add(btnSave);
 
 		// create table
 		JScrollPane scrollPane = new JScrollPane();
-		scrollPane.setBounds(25, 150, Base.WIDTH - 50, 500);
+		scrollPane.setBounds(25, 150, BaseConstants.WIDTH - 50, 500);
 		scrollPane.getViewport().setBackground(Color.white);
 		contentPane.add(scrollPane);
 
@@ -423,9 +456,9 @@ public class AddMeasurements extends JFrame {
 //			};
 		};
 		tblMain.setBounds(0, 0, 0, 0);
-		tblMain.setFont(Base.DEFAULT_FONT);
+		tblMain.setFont(BaseConstants.DEFAULT_FONT);
 		tblMain.setRowHeight(26);
-		tblMain.getTableHeader().setFont(Base.DEFAULT_FONT);
+		tblMain.getTableHeader().setFont(BaseConstants.DEFAULT_FONT);
 		tblMain.getTableHeader().setResizingAllowed(true);
 		scrollPane.setViewportView(tblMain);
 		tblMain.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -448,11 +481,11 @@ public class AddMeasurements extends JFrame {
 		OddRowColorRenderer orcr = new OddRowColorRenderer();
 		tblMain.setDefaultRenderer(Object.class, orcr);
 
-		tiModel = new DetailTableItemModel(detailList, zaList);
+		tiModel = new DetailTableItemModel(detailList);
 		tblMain.setModel(tiModel);
-		BaseMethods.ResizeColumnWidth(tblMain);
+		BaseMethods.resizeColumnWidth(tblMain);
 
-		SetBackgroundPicture();
+		setBackgroundPicture();
 		setVisible(true);
 	}
 
@@ -469,23 +502,34 @@ public class AddMeasurements extends JFrame {
 		}
 	}
 
-	private void ClearAddMeasurement() {
-		txtFz.setText("");
+	private class TextVerifier extends InputVerifier {
+		public boolean verify(JComponent input) {
+			JTextField tf = (JTextField) input;
+			return !tf.getText().isEmpty() && !"0".equals(tf.getText());
+		}
+	}
+
+	private void clearAddMeasurement() {
+		txtFz.setText("0");
 		txtFz.requestFocus();
 		txtLg.setText("100");
 		txtBzm.setText("1");
-		txtZaCode.setText("");
-		cboZA.setSelectedIndex(0);
+		cboZA.setSelectedIndex(-1);
+		txtZaCode.setText("0");
+		txtZaType.setText("");
 		chckbxTg.setSelected(true);
 		selectedRow = -1;
 	}
 
-	private boolean ValidateNewRecord() {
+	private boolean validateNewRecord() {
 		if (txtFz.getText().isEmpty()) {
 			JOptionPane.showMessageDialog(null, "Моля, въведете FZ.", BaseConstants.ERROR,
 					JOptionPane.INFORMATION_MESSAGE);
 			txtFz.requestFocus();
 			return false;
+		} else if (!BaseMethods.checkIsNumber(txtFz.getText())) {
+			txtFz.setText("");
+			txtFz.requestFocus();
 		}
 
 		if (txtZaCode.getText().isEmpty()) {
@@ -493,6 +537,19 @@ public class AddMeasurements extends JFrame {
 					JOptionPane.INFORMATION_MESSAGE);
 			txtZaCode.requestFocus();
 			return false;
+		} else if (!BaseMethods.checkIsNumber(txtZaCode.getText())) {
+			txtZaCode.setText("");
+			txtZaCode.requestFocus();
+		}
+
+		if (txtBzm.getText().isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Моля, изберете BZM.", BaseConstants.ERROR,
+					JOptionPane.INFORMATION_MESSAGE);
+			txtBzm.requestFocus();
+			return false;
+		} else if (!BaseMethods.checkIsNumber(txtBzm.getText())) {
+			txtBzm.setText("");
+			txtBzm.requestFocus();
 		}
 
 		if (txtLg.getText().isEmpty()) {
@@ -500,12 +557,15 @@ public class AddMeasurements extends JFrame {
 					JOptionPane.INFORMATION_MESSAGE);
 			txtLg.requestFocus();
 			return false;
+		} else if (!BaseMethods.checkIsNumber(txtLg.getText())) {
+			txtLg.setText("");
+			txtLg.requestFocus();
 		}
 
 		return true;
 	}
 
-	private boolean ValidateOnSave(List<TimeMeasurementDetail> detailList) {
+	private boolean validateOnSave(List<TimeMeasurementDetail> detailList) {
 		if (txtMeasurementName.getText().isEmpty()) {
 			JOptionPane.showMessageDialog(null, "Моля, въведете описание.", BaseConstants.ERROR,
 					JOptionPane.INFORMATION_MESSAGE);
@@ -523,10 +583,10 @@ public class AddMeasurements extends JFrame {
 		return true;
 	}
 
-	private void SetBackgroundPicture() {
+	private void setBackgroundPicture() {
 		ImageIcon imageIcon = new ImageIcon(Base.backgroundPic);
 		lblBackground = new JLabel(imageIcon);
-		lblBackground.setBounds(0, 0, Base.WIDTH, Base.HEIGHT);
+		lblBackground.setBounds(0, 0, BaseConstants.WIDTH, BaseConstants.HEIGHT);
 		contentPane.add(lblBackground);
 	}
 }

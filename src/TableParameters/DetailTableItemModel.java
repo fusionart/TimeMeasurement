@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
+import Controller.Excel.LoadZaFile;
 import Model.TimeMeasurementDetail;
 import Model.ZA;
 
@@ -17,11 +18,11 @@ public class DetailTableItemModel extends AbstractTableModel {
 
 	private static String header[] = { "Код", "Описание", "Тип", "FZ", "EZ", "LG", "TG"};
 
-	public DetailTableItemModel(List<TimeMeasurementDetail> tmDetails, List<ZA> zaList) {
+	public DetailTableItemModel(List<TimeMeasurementDetail> tmDetails) {
 
 		this.tmDetails = new ArrayList<TimeMeasurementDetail>(tmDetails);
-		this.zaList = new ArrayList<ZA>(zaList);
-		this.fz = 0;
+		LoadZaFile loadZaFile = LoadZaFile.getInstance();
+		this.zaList = loadZaFile.getAllRows();
 	}
 
 	@Override

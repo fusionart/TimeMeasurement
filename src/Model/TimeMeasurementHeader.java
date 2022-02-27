@@ -3,11 +3,14 @@ package Model;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 import com.j256.ormlite.dao.ForeignCollection;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
+
+import Controller.Base;
 
 @DatabaseTable(tableName = "tmheader")
 public class TimeMeasurementHeader {
@@ -42,11 +45,12 @@ public class TimeMeasurementHeader {
 	}
 
 	public long getDuration() {
-		if (startTime.isBlank() || endTime.isBlank()) {
+		if (startTime.isEmpty() || endTime.isEmpty()) {
 			return 0;
 		} else {
 			LocalTime stTime = LocalTime.parse(startTime);
 			LocalTime eTime = LocalTime.parse(endTime);
+
 			Duration duration = Duration.between(stTime, eTime);
 
 			return duration.toMinutes();

@@ -1,27 +1,19 @@
 package View;
 
-import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import Controller.Base;
+import Controller.BaseConstants;
 
 import javax.swing.JProgressBar;
-import javax.swing.SwingUtilities;
 import javax.swing.JLabel;
-import java.awt.Image;
-import java.awt.Toolkit;
-import java.awt.Window;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.EventQueue;
-import java.awt.FlowLayout;
-import java.awt.Graphics;
 import javax.swing.SwingConstants;
 
 public class LoadingScreen extends JDialog {
@@ -43,7 +35,7 @@ public class LoadingScreen extends JDialog {
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		//Image frameIcon = Toolkit.getDefaultToolkit().getImage(Base.icon);
 		//setIconImage(frameIcon);
-		setTitle(Base.FRAME_CAPTION);
+		setTitle(BaseConstants.FRAME_CAPTION);
 		setResizable(false);
 		//setModal(true);
 
@@ -68,7 +60,7 @@ public class LoadingScreen extends JDialog {
 
 		lblPercentage = new JLabel("Зареждане. Моля изчакайте.");
 		lblPercentage.setHorizontalAlignment(SwingConstants.CENTER);
-		lblPercentage.setFont(Base.DEFAULT_FONT);
+		lblPercentage.setFont(BaseConstants.DEFAULT_FONT);
 		GridBagConstraints gbc_lblPercentage = new GridBagConstraints();
 		gbc_lblPercentage.insets = new Insets(0, 0, 5, 0);
 		gbc_lblPercentage.fill = GridBagConstraints.BOTH;
@@ -82,7 +74,7 @@ public class LoadingScreen extends JDialog {
 		gbc_progressBar.gridx = 0;
 		gbc_progressBar.gridy = 1;
 		panel.add(progressBar, gbc_progressBar);
-		progressBar.setFont(Base.DEFAULT_FONT);
+		progressBar.setFont(BaseConstants.DEFAULT_FONT);
 		progressBar.setStringPainted(true);
 
 		//ImageIcon imageIcon = new ImageIcon(Base.backgroundPic);

@@ -16,7 +16,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
 public class BaseMethods {
-	public static Boolean CheckIsNumber(String s) {
+	public static Boolean checkIsNumber(String s) {
 		if ((s == null)) {
 			return false;
 		}
@@ -30,7 +30,7 @@ public class BaseMethods {
 		return true;
 	}
 
-	public static Boolean CheckIfNegative(String s) {
+	public static Boolean checkIfNegative(String s) {
 		if (Integer.parseInt(s) <= 0) {
 			JOptionPane.showMessageDialog(null, "Моля, въведете число по-голямо от 0!", "Грешка!",
 					JOptionPane.INFORMATION_MESSAGE);
@@ -39,13 +39,13 @@ public class BaseMethods {
 		return false;
 	}
 
-	public static String ExtractDate(String dateTime) {
+	public static String extractDate(String dateTime) {
 		LocalDateTime localDateTime = LocalDateTime.parse(dateTime);
 
-		return FormatDate(localDateTime.toLocalDate());
+		return formatDate(localDateTime.toLocalDate());
 	}
 
-	public static String FormatDate(LocalDate date) {
+	public static String formatDate(LocalDate date) {
 		String formattedDate = null;
 		DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
@@ -56,7 +56,7 @@ public class BaseMethods {
 		return formattedDate;
 	}
 
-	public static String FormatTime(LocalTime time) {
+	public static String formatTime(LocalTime time) {
 		DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
 
 		String formattedTime = time.format(timeFormat);
@@ -64,7 +64,7 @@ public class BaseMethods {
 		return formattedTime;
 	}
 
-	public static void ResizeColumnWidth(JTable table) {
+	public static void resizeColumnWidth(JTable table) {
 		final TableColumnModel columnModel = table.getColumnModel();
 		for (int column = 0; column < table.getColumnCount(); column++) {
 			int width = 50; // Min width

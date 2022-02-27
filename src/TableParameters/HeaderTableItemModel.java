@@ -53,13 +53,19 @@ public class HeaderTableItemModel extends AbstractTableModel {
                 value = tmHeader.getEndTime();
                 break;
             case 4:
-                value = BaseMethods.ExtractDate(tmHeader.getCreateDate());
+                value = BaseMethods.extractDate(tmHeader.getCreateDate());
                 break;
         }
 
         return value;
     }
 
+    public void deleteRow(TimeMeasurementHeader tmHeader) {
+    	tmHeaders.remove(tmHeader);
+    	//fireTableRowsInserted(tmDetails.size() - 1, tmDetails.size() - 1);
+    	fireTableDataChanged();
+    }
+    
     /**
      * This will return the user at the specified row...
      * @param row

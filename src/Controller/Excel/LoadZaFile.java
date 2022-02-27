@@ -12,20 +12,32 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
 import Controller.Base;
+import Controller.BaseConstants;
 import Model.ZA;
 import View.LoadingScreen;
 
 public class LoadZaFile {
-	private static Workbook workbook;
-	private static List<ZA> allRows;
-
-	public static List<ZA> LoadZA() {
-		workbook = ReadExcelFile.LoadExcelFile(Base.zaFile);
+	private Workbook workbook;
+	private List<ZA> allRows;
+	
+	private LoadZaFile() {
+		this.workbook = ReadExcelFile.LoadExcelFile(Base.zaFile);
 		ReadAllRows();
+	}
+	
+    private static class SingletonHelper{
+        private static final LoadZaFile INSTANCE = new LoadZaFile();
+    }
+    
+    public static LoadZaFile getInstance(){
+        return SingletonHelper.INSTANCE;
+    }
+	
+	public List<ZA> getAllRows() {
 		return allRows;
 	}
-
-	private static void ReadAllRows() {
+    
+	private void ReadAllRows() {
 
 		allRows = new ArrayList<ZA>();
 
@@ -47,7 +59,7 @@ public class LoadZaFile {
 
 					// Reading cells in this way because For loop and Iterator can handle with blank
 					// cells
-					for (int cn = 0; cn <= Base.LAST_COLUMN; cn++) {
+					for (int cn = 0; cn <= BaseConstants.LAST_COLUMN; cn++) {
 						Cell cell = row.getCell(cn, MissingCellPolicy.RETURN_BLANK_AS_NULL);
 						if (cell == null) {
 							temp.add(" ");
@@ -98,7 +110,7 @@ public class LoadZaFile {
 		}.execute();
 	}
 
-	private static Sheet GetSheet() {
+	private Sheet GetSheet() {
 		Sheet sheet = workbook.getSheetAt(0);
 
 		return sheet;

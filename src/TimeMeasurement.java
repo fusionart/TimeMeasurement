@@ -13,7 +13,7 @@ public class TimeMeasurement {
 
 		CreateTables.createNewDatabase();
 		CreateTables.CreateDbTables();
-		Base.LoadSettings();
+		Base.loadSettings();
 		new Header();
 
 	}

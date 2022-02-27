@@ -1,47 +1,51 @@
 package View;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.Toolkit;
-import java.util.ArrayList;
-import java.util.List;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableRowSorter;
-
-import Controller.Base;
-import Controller.BaseConstants;
-import Controller.BaseMethods;
-import Controller.Services.CRUD;
-import Controller.Services.TimeMeasurementHeaderServices;
-import Model.TimeMeasurementDetail;
-import Model.TimeMeasurementHeader;
-import TableParameters.DetailTableItemModel;
-import TableParameters.HeaderTableItemModel;
-import TableParameters.OddRowColorRenderer;
-
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.ActionEvent;
-import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
+import javax.swing.table.DefaultTableCellRenderer;
+
+import Controller.Base;
+import Controller.BaseConstants;
+import Controller.BaseMethods;
+import Controller.Services.CRUD;
+import Model.TimeMeasurementDetail;
+import Model.TimeMeasurementHeader;
+import TableParameters.HeaderTableItemModel;
+import TableParameters.OddRowColorRenderer;
 
 public class Header extends JFrame {
 
 	private JPanel contentPane;
+
+	private final int POPUP_MENU_WIDTH = 150;
+	private final int POPUP_MENU_ITEM_HEIGHT = 30;
 
 	private static HeaderTableItemModel tiModel;
 
@@ -62,12 +66,12 @@ public class Header extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		Image frameIcon = Toolkit.getDefaultToolkit().getImage(Base.icon);
 		setIconImage(frameIcon);
-		setTitle(Base.FRAME_CAPTION);
+		setTitle(BaseConstants.FRAME_CAPTION);
 		setResizable(false);
 
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-		contentPane.setPreferredSize(new Dimension(Base.WIDTH, Base.HEIGHT));
+		contentPane.setPreferredSize(new Dimension(BaseConstants.WIDTH, BaseConstants.HEIGHT));
 		getContentPane().add(contentPane);
 		contentPane.setLayout(null);
 
@@ -77,7 +81,7 @@ public class Header extends JFrame {
 
 		// create table
 		JScrollPane scrollPane = new JScrollPane();
-		scrollPane.setBounds(25, 25, Base.WIDTH - 50, Base.HEIGHT - 100);
+		scrollPane.setBounds(25, 25, BaseConstants.WIDTH - 50, BaseConstants.HEIGHT - 100);
 		scrollPane.getViewport().setBackground(Color.white);
 		contentPane.add(scrollPane);
 
@@ -87,9 +91,9 @@ public class Header extends JFrame {
 //			};
 		};
 		tblMain.setBounds(0, 0, 0, 0);
-		tblMain.setFont(Base.DEFAULT_FONT);
+		tblMain.setFont(BaseConstants.DEFAULT_FONT);
 		tblMain.setRowHeight(26);
-		tblMain.getTableHeader().setFont(Base.DEFAULT_FONT);
+		tblMain.getTableHeader().setFont(BaseConstants.DEFAULT_FONT);
 		tblMain.getTableHeader().setResizingAllowed(true);
 		scrollPane.setViewportView(tblMain);
 		tblMain.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -104,16 +108,100 @@ public class Header extends JFrame {
 			}
 		});
 
+		JPopupMenu popupMenu = new JPopupMenu();
+		popupMenu.addPopupMenuListener(new PopupMenuListener() {
+
+			@Override
+			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						int rowAtPoint = tblMain
+								.rowAtPoint(SwingUtilities.convertPoint(popupMenu, new Point(0, 0), tblMain));
+						if (rowAtPoint > -1) {
+							tblMain.setRowSelectionInterval(rowAtPoint, rowAtPoint);
+							tmHeaderSelected = tiModel.getHeaderAt(tblMain.getSelectedRow());
+						}
+					}
+				});
+			}
+
+			@Override
+			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void popupMenuCanceled(PopupMenuEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+		JMenuItem copyItem = new JMenuItem("Копиране");
+		copyItem.setFont(BaseConstants.DEFAULT_FONT);
+		copyItem.setPreferredSize(new Dimension(POPUP_MENU_WIDTH, POPUP_MENU_ITEM_HEIGHT));
+		popupMenu.add(copyItem);
+		copyItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					detailList = CRUD.getAllDetails(tmHeaderSelected);
+					AddMeasurements addMeasurement = new AddMeasurements(detailList);
+					addMeasurement.addWindowListener(new WindowAdapter() {
+						@Override
+						public void windowClosed(WindowEvent e) {
+							super.windowClosed(e);
+							tmHeaderSelected = null;
+							FillTable();
+						}
+					});
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
+		});
+
+		JMenuItem deleteItem = new JMenuItem("Изтрий");
+		deleteItem.setFont(BaseConstants.DEFAULT_FONT);
+		deleteItem.setPreferredSize(new Dimension(POPUP_MENU_WIDTH, POPUP_MENU_ITEM_HEIGHT));
+		popupMenu.add(deleteItem);
+		deleteItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+
+				Object[] options = { "Да", "Не" };
+				int response = JOptionPane.showOptionDialog(null, "Сигурни ли сте, че искате да изтриете записа?",
+						"Внимание", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);
+
+				if (response == 0) {
+					try {
+						CRUD.delete(tmHeaderSelected);
+						tiModel.deleteRow(tmHeaderSelected);
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
+
+		tblMain.setComponentPopupMenu(popupMenu);
+
 		OddRowColorRenderer orcr = new OddRowColorRenderer();
 		tblMain.setDefaultRenderer(Object.class, orcr);
 
 		JButton btnAddNew = new JButton("Ново измерване");
 		btnAddNew.setForeground(Color.WHITE);
-		btnAddNew.setBackground(Base.BUTTON_COLOR);
-		btnAddNew.setFont(Base.DEFAULT_FONT);
+		btnAddNew.setBackground(BaseConstants.BUTTON_COLOR);
+		btnAddNew.setFont(BaseConstants.DEFAULT_FONT);
 		btnAddNew.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
+					detailList.clear();
 					AddMeasurements addMeasurement = new AddMeasurements(detailList);
 					addMeasurement.addWindowListener(new WindowAdapter() {
 						@Override
@@ -128,7 +216,7 @@ public class Header extends JFrame {
 				}
 			}
 		});
-		btnAddNew.setBounds(1115, 705, Base.BUTTON_WIDTH, Base.BUTTON_HEIGHT);
+		btnAddNew.setBounds(1115, 705, BaseConstants.BUTTON_WIDTH, BaseConstants.BUTTON_HEIGHT);
 		contentPane.add(btnAddNew);
 
 		JButton btnCopy = new JButton("Копиране");
@@ -136,7 +224,7 @@ public class Header extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
 					if (tmHeaderSelected != null) {
-						detailList = CRUD.GetAllDetails(tmHeaderSelected);
+						detailList = CRUD.getAllDetails(tmHeaderSelected);
 						AddMeasurements addMeasurement = new AddMeasurements(detailList);
 						addMeasurement.addWindowListener(new WindowAdapter() {
 							@Override
@@ -147,7 +235,8 @@ public class Header extends JFrame {
 							}
 						});
 					} else {
-						JOptionPane.showMessageDialog(null, "Моля, изберете запис.", BaseConstants.ERROR, JOptionPane.INFORMATION_MESSAGE);
+						JOptionPane.showMessageDialog(null, "Моля, изберете запис.", BaseConstants.ERROR,
+								JOptionPane.INFORMATION_MESSAGE);
 					}
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
@@ -155,10 +244,10 @@ public class Header extends JFrame {
 				}
 			}
 		});
-		btnCopy.setBounds(878, 705, Base.BUTTON_WIDTH, Base.BUTTON_HEIGHT);
+		btnCopy.setBounds(878, 705, BaseConstants.BUTTON_WIDTH, BaseConstants.BUTTON_HEIGHT);
 		btnCopy.setForeground(Color.WHITE);
-		btnCopy.setBackground(Base.BUTTON_COLOR);
-		btnCopy.setFont(Base.DEFAULT_FONT);
+		btnCopy.setBackground(BaseConstants.BUTTON_COLOR);
+		btnCopy.setFont(BaseConstants.DEFAULT_FONT);
 		contentPane.add(btnCopy);
 
 		FillTable();
@@ -169,7 +258,7 @@ public class Header extends JFrame {
 	private static void FillTable() {
 		List<TimeMeasurementHeader> data = null;
 		try {
-			data = TimeMeasurementHeaderServices.GetRecords();
+			data = CRUD.getAllHeaders();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -177,7 +266,7 @@ public class Header extends JFrame {
 
 		tiModel = new HeaderTableItemModel(data);
 		tblMain.setModel(tiModel);
-		BaseMethods.ResizeColumnWidth(tblMain);
+		BaseMethods.resizeColumnWidth(tblMain);
 
 		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 		centerRenderer.setHorizontalAlignment(JLabel.CENTER);
@@ -188,7 +277,7 @@ public class Header extends JFrame {
 	private void SetBackgroundPicture() {
 		ImageIcon imageIcon = new ImageIcon(Base.backgroundPic);
 		lblBackground = new JLabel(imageIcon);
-		lblBackground.setBounds(0, 0, Base.WIDTH, Base.HEIGHT);
+		lblBackground.setBounds(0, 0, BaseConstants.WIDTH, BaseConstants.HEIGHT);
 		contentPane.add(lblBackground);
 	}
 }

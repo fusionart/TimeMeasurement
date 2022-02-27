@@ -1,17 +1,13 @@
 package Controller;
 
-import java.awt.Color;
-import java.awt.Font;
 import java.io.IOException;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 import java.util.prefs.Preferences;
 
 public class Base {
-	public final static String DOT = ".";
-	public final static String BACKSLASH = "\\";
-	public final static String DELIMITER = ";";
-	public final static String FORWARDSLASH = "/";
+	private final static String DOT = ".";
+	private final static String BACKSLASH = "\\";
+	private final static String DELIMITER = ";";
+	private final static String FORWARDSLASH = "/";
 	private static String slash;
 
 	// Paths
@@ -21,50 +17,21 @@ public class Base {
 	// database
 	public static String DATABASE_URL = "jdbc:sqlite:db/timemeasurement.db";
 
-	// Labels
-	public final static String FRAME_CAPTION = "Time Measurement";
-
-	// Size
-	public final static int WIDTH = 1366;
-	public final static int HEIGHT = 768;
-	public final static int ELEMENT_HEIGHT = 30;
-	public final static int ELEMENT_OFFSET = 37;
-	public final static int PANEL_HEIGHT = 74;
-	public final static int PANEL_WIDTH = 250;
-	public final static int BUTTON_HEIGHT = 50;
-	public final static int BUTTON_WIDTH = 225;
-	public final static int LAST_COLUMN = 4;
-
-	// Locale
-	public final static Locale LOCALE = new Locale("bg");
-
-	public final static DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-	public final static DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
-	public final static DateTimeFormatter fileNameTimeFormat = DateTimeFormatter.ofPattern("HH-mm-ss");
-
-	// default fonts
-	public final static Font DEFAULT_FONT = new Font("Century Gothic", Font.BOLD, 18);
-	public final static Font RADIO_BUTTON_FONT = new Font("Century Gothic", Font.BOLD, 14);
-
-	// default colors
-	public final static Color TEXT_FIELD_COLOR = new Color(51, 51, 204);
-	public final static Color BUTTON_COLOR = new Color(0, 153, 255);
-
-	public static Preferences settings;
+	private static Preferences settings;
 	public static String backgroundPic;
 	public static String icon;
 	public static String zaFile;
 	public static String reportTemplate;
 	public static String reportSaveAddress;
 
-	public static void LoadSettings() {
-		GetCorrectSlash();
-		LoadPaths();
-		AssignVariables();
+	public static void loadSettings() {
+		getCorrectSlash();
+		loadPaths();
+		assignVariables();
 	}
 
-	private static void LoadPaths() {
-		String os = GetOperatingSystem();
+	private static void loadPaths() {
+		String os = getOperatingSystem();
 		try {
 			if (os.equals("Linux")) {
 				settings = ReadIni.ParseIni(MAIN_PATH_LINUX);
@@ -78,8 +45,8 @@ public class Base {
 		}
 	}
 
-	private static void GetCorrectSlash() {
-		String os = GetOperatingSystem();
+	private static void getCorrectSlash() {
+		String os = getOperatingSystem();
 		if (os.equals("Linux")) {
 			slash = FORWARDSLASH;
 		} else {
@@ -87,13 +54,13 @@ public class Base {
 		}
 	}
 
-	private static String GetOperatingSystem() {
+	private static String getOperatingSystem() {
 		String os = System.getProperty("os.name");
 		// System.out.println("Using System Property: " + os);
 		return os;
 	}
 
-	private static void AssignVariables() {
+	private static void assignVariables() {
 		StringBuilder sb = new StringBuilder();
 
 		// background
