@@ -138,6 +138,13 @@ public class AddMeasurements extends JFrame {
 		lblFz.setFont(BaseConstants.DEFAULT_FONT);
 
 		txtFz = new JTextField();
+		txtFz.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				JTextField txt = (JTextField) e.getComponent();
+				txt.selectAll();
+			}
+		});
 		PlainDocument txtFzDoc = (PlainDocument) txtFz.getDocument();
 		txtFzDoc.setDocumentFilter(new IntFormatter());
 		GridBagConstraints gbc_txtFz = new GridBagConstraints();
@@ -178,6 +185,12 @@ public class AddMeasurements extends JFrame {
 						txtZaCode.requestFocus();
 					}
 				}
+			}
+
+			@Override
+			public void focusGained(FocusEvent e) {
+				JTextField txt = (JTextField) e.getComponent();
+				txt.selectAll();
 			}
 		});
 		GridBagConstraints gbc_txtZaCode = new GridBagConstraints();
@@ -304,7 +317,9 @@ public class AddMeasurements extends JFrame {
 
 						detailList.sort(Comparator.comparing(TimeMeasurementDetail::getFz));
 
-						tiModel.addRow(tmDetail);
+						//tiModel.addRow(tmDetail);
+						tiModel.updateTable(detailList);
+						
 						BaseMethods.resizeColumnWidth(tblMain);
 						clearAddMeasurement();
 					}
@@ -316,11 +331,15 @@ public class AddMeasurements extends JFrame {
 						tmDetail.setFz(Integer.parseInt(txtFz.getText()));
 						tmDetail.setZaCode(Integer.parseInt(txtZaCode.getText()));
 						tmDetail.setTg(chckbxTg.isSelected());
+						tmDetail.setBzm(Integer.parseInt(txtBzm.getText()));
 						tmDetail.setLg(Integer.parseInt(txtLg.getText()));
 
 						detailList.set(getIndex, tmDetail);
 
-						tiModel.fireTableRowsUpdated(selectedRow, selectedRow);
+						detailList.sort(Comparator.comparing(TimeMeasurementDetail::getFz));
+						
+						tiModel.updateTable(detailList);
+
 						clearAddMeasurement();
 					}
 				}
@@ -472,9 +491,17 @@ public class AddMeasurements extends JFrame {
 				TimeMeasurementDetail tmDetail = tiModel.getDetailAt(tblMain.getSelectedRow());
 				txtFz.setText(String.valueOf(tmDetail.getFz()));
 				txtFz.requestFocus();
+				txtBzm.setText(String.valueOf(tmDetail.getBzm()));
 				txtLg.setText(String.valueOf(tmDetail.getLg()));
 				chckbxTg.setSelected(tmDetail.getTg());
-				cboZA.setSelectedIndex(tmDetail.getZaCode() - 1);
+
+				txtZaCode.setText(String.valueOf(tmDetail.getZaCode()));
+
+				ZA za = zaList.stream().filter(zaItem -> tmDetail.getZaCode() == zaItem.getCode()).findAny()
+						.orElse(null);
+
+				txtZaType.setText(za.getType());
+				cboZA.setSelectedIndex(zaList.indexOf(za));
 			}
 		});
 
@@ -510,15 +537,15 @@ public class AddMeasurements extends JFrame {
 	}
 
 	private void clearAddMeasurement() {
-		txtFz.setText("0");
+		txtFz.setText("1");
 		txtFz.requestFocus();
 		txtLg.setText("100");
 		txtBzm.setText("1");
 		cboZA.setSelectedIndex(-1);
-		txtZaCode.setText("0");
+		txtZaCode.setText("1");
 		txtZaType.setText("");
 		chckbxTg.setSelected(true);
-		selectedRow = -1;
+		tblMain.getSelectionModel().clearSelection();
 	}
 
 	private boolean validateNewRecord() {

@@ -87,11 +87,10 @@ public class DetailTableItemModel extends AbstractTableModel {
 
 		return ez;
 	}
-
-	public void addRow(TimeMeasurementDetail tmDetail) {
-		tmDetails.add(tmDetail);
-		tmDetails.sort(Comparator.comparing(TimeMeasurementDetail::getFz));
-		fireTableRowsInserted(tmDetails.size() - 1, tmDetails.size() - 1);
+	
+	public void updateTable(List<TimeMeasurementDetail> detailList) {
+		this.tmDetails = detailList;
+		fireTableDataChanged();
 	}
 
 	/**

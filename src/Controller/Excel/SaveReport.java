@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row.MissingCellPolicy;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -19,28 +21,40 @@ import Model.TimeMeasurementHeader;
 import Model.ZA;
 
 public class SaveReport {
-	private TimeMeasurementHeader tmHeader; 
-	private List<TimeMeasurementDetail> detailList;
+	private TimeMeasurementHeader tmHeader;
 	private List<ZA> zaList;
-	
+	private Workbook workbook;
+	private XSSFSheet sheet;
+	private XSSFCell cellToUpdate;
+	private CalculateReport calculateReport;
+	private final int SECOND_PAGE_START_ROW = 76;
+	private int secondPageRow = 0;
+	DataFormat format;
+
 	public SaveReport(TimeMeasurementHeader tmHeader, List<TimeMeasurementDetail> detailList) {
 		this.tmHeader = tmHeader;
-		this.detailList = detailList;
 		LoadZaFile loadZaFile = LoadZaFile.getInstance();
 		this.zaList = loadZaFile.getAllRows();
+		this.workbook = ReadExcelFile.LoadExcelFile(Base.reportTemplate);
+		this.sheet = (XSSFSheet) workbook.getSheetAt(0);
+		this.calculateReport = new CalculateReport(detailList);
+		this.format = workbook.createDataFormat();
 	}
 
 	public void saveReportFile() {
-		Workbook workbook = ReadExcelFile.LoadExcelFile(Base.reportTemplate);
-		XSSFSheet sheet = (XSSFSheet) workbook.getSheetAt(0);
-
 		FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
 
-		HashMap<Integer, PhaseDetails> sortedTmDetails = CalculateReport.calculateReportData(detailList);
-		double mainTime = CalculateReport.calculateMainTime(sortedTmDetails);
+		HashMap<Integer, PhaseDetails> detailsWithTg = calculateReport.getDetailsWithTg();
+		HashMap<Integer, PhaseDetails> detailsWithoutTg = calculateReport.getDetailsWithoutTg();
 
-		fillFirstPage(sheet, mainTime, tmHeader);
-		fillSecondPage(sheet, sortedTmDetails);
+		fillFirstPage(calculateReport.getMainTime(), tmHeader);
+		fillSecondPage(detailsWithTg);
+
+		if (detailsWithoutTg.size() > 0) {
+			fillSecondPage(detailsWithoutTg);
+		}
+
+		fillThirdPage();
 
 		evaluator.clearAllCachedResultValues();
 		evaluator.evaluateAll();
@@ -48,15 +62,96 @@ public class SaveReport {
 		SaveExcel.SaveExcelFile(workbook, Base.reportSaveAddress, tmHeader.getName());
 	}
 
-	private void fillSecondPage(XSSFSheet sheet, HashMap<Integer, PhaseDetails> sortedTmDetails) {
-		XSSFCell cellToUpdate;
+	private void fillThirdPage() {
+		int thbTotal = 0;
+		int tnbTotal = 0;
+		int otherTotal = 0;
+		int total;
+		int nextRow = 162;
+		HashMap<Integer, PhaseDetails> thbDetails = calculateReport.getThbDetails();
+		HashMap<Integer, PhaseDetails> tnbDetails = calculateReport.getTnbDetails();
+		HashMap<Integer, PhaseDetails> otherDetails = calculateReport.getOtherDetails();
+
+		thbTotal = calculateTTotal(thbDetails);
+		tnbTotal = calculateTTotal(tnbDetails);
+		otherTotal = calculateTTotal(otherDetails);
+
+		total = thbTotal + tnbTotal + otherTotal;
+		// set the total
+		writeInCell(total, 231, 21);
+
+		if (thbTotal > 0) {
+			double thbPercent = (double) thbTotal / total * 100;
+			thbPercent = roundNumber(thbPercent, 2);
+			// set thb details
+			writeInCellNumber(thbTotal, 156, 18);
+			writeInCellNumber(thbPercent, 156, 21);
+		}
+
+		if (tnbTotal > 0) {
+			double tnbPercent = (double) tnbTotal / total * 100;
+			tnbPercent = roundNumber(tnbPercent, 2);
+			// set thb details
+			writeInCellNumber(tnbTotal, 159, 18);
+			writeInCellNumber(tnbPercent, 159, 21);
+		}
+
+		if (otherDetails.size() > 0) {
+			PhaseDetails phaseDetails = new PhaseDetails();
+			for (Map.Entry<Integer, PhaseDetails> record : otherDetails.entrySet()) {
+
+				phaseDetails = record.getValue();
+				ZA za = zaList.stream().filter(zaItem -> record.getKey() == zaItem.getCode()).findAny().orElse(null);
+
+				int calculatedEz = calculateEz(phaseDetails.getEz());
+				double detailPercent;
+				if (!za.getType().equals("P")) {
+					detailPercent = (double) calculatedEz / total * 100;
+					detailPercent = roundNumber(detailPercent, 2);
+				} else {
+					detailPercent = (double) 0.00;
+				}
+
+				writeInCell(za.getType(), nextRow, 0);
+				writeInCell(za.getDesc_bg(), nextRow, 2);
+				writeInCellNumber(calculatedEz, nextRow, 18);
+				writeInCellNumber(detailPercent, nextRow, 21);
+
+				nextRow += 3;
+			}
+		}
+	}
+
+	private int calculateTTotal(HashMap<Integer, PhaseDetails> tDetails) {
 		PhaseDetails phaseDetails = new PhaseDetails();
-		int row = 76;
+		int tTotal = 0;
+		for (Map.Entry<Integer, PhaseDetails> record : tDetails.entrySet()) {
+			phaseDetails = record.getValue();
+			ZA za = zaList.stream().filter(zaItem -> record.getKey() == zaItem.getCode()).findAny().orElse(null);
 
-		for (Map.Entry<Integer, PhaseDetails> set : sortedTmDetails.entrySet()) {
+			// do not include time for breaks
+			if (!za.getType().equals("P")) {
+				tTotal += calculateEz(phaseDetails.getEz());
+			}
+		}
 
-			phaseDetails = set.getValue();
-			ZA za = zaList.stream().filter(zaItem -> set.getKey() == zaItem.getCode()).findAny().orElse(null);
+		return tTotal;
+	}
+
+	private void fillSecondPage(HashMap<Integer, PhaseDetails> tmDetails) {
+		PhaseDetails phaseDetails = new PhaseDetails();
+		int row;
+
+		if (secondPageRow == 0) {
+			row = SECOND_PAGE_START_ROW;
+		} else {
+			row = secondPageRow;
+		}
+
+		for (Map.Entry<Integer, PhaseDetails> record : tmDetails.entrySet()) {
+
+			phaseDetails = record.getValue();
+			ZA za = zaList.stream().filter(zaItem -> record.getKey() == zaItem.getCode()).findAny().orElse(null);
 
 			if (za == null) {
 				continue;
@@ -74,93 +169,92 @@ public class SaveReport {
 			}
 
 			// set AA Nr
-			cellToUpdate = sheet.getRow(row).getCell(0, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-			cellToUpdate.setCellValue(set.getKey());
+			writeInCell(record.getKey(), row, 0);
 
 			// set ZA Description
-			cellToUpdate = sheet.getRow(row).getCell(2, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-			cellToUpdate.setCellValue(za.getDesc_bg());
+			writeInCell(za.getDesc_bg(), row, 2);
 
 			// set ZA Code
-			cellToUpdate = sheet.getRow(row).getCell(19, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-			cellToUpdate.setCellValue(za.getType());
+			writeInCell(za.getType(), row, 19);
 
 			// set n
-			cellToUpdate = sheet.getRow(row).getCell(21, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-			cellToUpdate.setCellValue(phaseDetails.getEz().size());
+			writeInCell(phaseDetails.getEz().size(), row, 21);
 
 			// set LG
-			cellToUpdate = sheet.getRow(row).getCell(23, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-			cellToUpdate.setCellValue(phaseDetails.getLg());
+			writeInCell(phaseDetails.getLg(), row, 23);
 
 			// set EZ[HM]
-			cellToUpdate = sheet.getRow(row).getCell(25, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-			cellToUpdate.setCellValue(calculatedEz);
+			writeInCellNumber(calculatedEz, row, 25);
 
 			// set SZ[HM]
-			cellToUpdate = sheet.getRow(row).getCell(28, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-			cellToUpdate.setCellValue(calculatedSz);
+			writeInCellNumber(calculatedSz, row, 28);
 
 			// set BZM
-			cellToUpdate = sheet.getRow(row).getCell(31, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-			cellToUpdate.setCellValue(phaseDetails.getBzm());
+			writeInCell(phaseDetails.getBzm(), row, 31);
 
 			// set SZ/BZM[HM]
-			cellToUpdate = sheet.getRow(row).getCell(33, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-			cellToUpdate.setCellValue(calculatedSzBzm);
+			writeInCellNumber(calculatedSzBzm, row, 33);
 
 			// set te,tr[HM]
-			cellToUpdate = sheet.getRow(row).getCell(35, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-			cellToUpdate.setCellValue(calculatedTeTr);
+			writeInCellNumber(calculatedTeTr, row, 35);
 
 			// ainTime += CalculateSzBzm(set.getValue());
 
 			row += 3;
 		}
+		secondPageRow = row;
 	}
 
-	private static void fillFirstPage(XSSFSheet sheet, double mainTime, TimeMeasurementHeader tmHeader) {
-		XSSFCell cellToUpdate;
+	private void fillFirstPage(double mainTime, TimeMeasurementHeader tmHeader) {
 		// set main time
-		cellToUpdate = sheet.getRow(14).getCell(29, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-		cellToUpdate.setCellValue(mainTime);
+		writeInCellNumber(mainTime, 14, 29);
 
 		// set name
-		cellToUpdate = sheet.getRow(3).getCell(9, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-		cellToUpdate.setCellValue(tmHeader.getName());
+		writeInCell(tmHeader.getName(), 3, 9);
 
 		// set date
-		cellToUpdate = sheet.getRow(6).getCell(7, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-		cellToUpdate.setCellValue(BaseMethods.extractDate(tmHeader.getCreateDate()));
+		writeInCell(BaseMethods.extractDate(tmHeader.getCreateDate()), 6, 7);
 
 		// set begin time
-		cellToUpdate = sheet.getRow(6).getCell(16, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-		cellToUpdate.setCellValue(tmHeader.getStartTime());
+		writeInCell(tmHeader.getStartTime(), 6, 16);
 
 		// set end time
-		cellToUpdate = sheet.getRow(6).getCell(25, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-		cellToUpdate.setCellValue(tmHeader.getEndTime());
+		writeInCell(tmHeader.getEndTime(), 6, 25);
 
 		// set duration
-		cellToUpdate = sheet.getRow(6).getCell(34, MissingCellPolicy.CREATE_NULL_AS_BLANK);
-		cellToUpdate.setCellValue(tmHeader.getDuration());
+		writeInCell(tmHeader.getDuration(), 6, 34);
 	}
 
-	private static double calculateSz(PhaseDetails phaseDetails, int calculatedEz) {
+	private <T> void writeInCell(T value, int row, int column) {
+		cellToUpdate = this.sheet.getRow(row).getCell(column, MissingCellPolicy.CREATE_NULL_AS_BLANK);
+		cellToUpdate.setCellValue(value.toString());
+	}
 
+	private void writeInCellNumber(double value, int row, int column) {
+		cellToUpdate = this.sheet.getRow(row).getCell(column, MissingCellPolicy.CREATE_NULL_AS_BLANK);
+		cellToUpdate.setCellValue(value);
+	}
+
+	private double calculateSz(PhaseDetails phaseDetails, int calculatedEz) {
 		double szBzm = 0.0;
 
 		szBzm = (double) calculatedEz * phaseDetails.getLg() / 100;
-
-		// round to second decimal
-		szBzm = szBzm * 100;
-		szBzm = (double) Math.round(szBzm);
-		szBzm = szBzm / 100;
+		szBzm = roundNumber(szBzm, 2);
 
 		return szBzm;
 	}
 
-	private static int calculateEz(List<Integer> ez) {
+	private double roundNumber(double value, int digits) {
+		int rounding = (int) Math.pow(10, digits);
+
+		value = value * rounding;
+		value = (double) Math.round(value);
+		value = value / rounding;
+
+		return value;
+	}
+
+	private int calculateEz(List<Integer> ez) {
 		int sumEz = 0;
 
 		for (Integer time : ez) {
