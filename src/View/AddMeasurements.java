@@ -9,8 +9,10 @@ import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JList;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.border.EmptyBorder;
@@ -40,6 +42,7 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.JCheckBox;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -49,6 +52,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.border.TitledBorder;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.text.PlainDocument;
 
 import com.github.lgooddatepicker.components.TimePicker;
@@ -58,6 +63,8 @@ import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 
 public class AddMeasurements extends JFrame {
@@ -81,6 +88,8 @@ public class AddMeasurements extends JFrame {
 	private JComboBox<ZA> cboZA;
 	private JCheckBox chckbxTg;
 	private JTextField txtBzm;
+
+	private TimeMeasurementDetail tmDetailSelected;
 
 	/**
 	 * Create the frame.
@@ -172,16 +181,17 @@ public class AddMeasurements extends JFrame {
 			@Override
 			public void focusLost(FocusEvent e) {
 				if (!txtZaCode.getText().isEmpty()) {
+					int zaCode = Integer.parseInt(txtZaCode.getText());
 
-					ZA za = zaList.stream().filter(zaItem -> Integer.parseInt(txtZaCode.getText()) == zaItem.getCode())
-							.findAny().orElse(null);
+					ZA za = zaList.stream().filter(zaItem -> zaCode == zaItem.getCode()).findAny().orElse(null);
 					if (za != null) {
 						txtZaType.setText(za.getType());
 						cboZA.setSelectedIndex(zaList.indexOf(za));
+						fillDefaultValues(zaCode, detailList);
 					} else {
 						JOptionPane.showMessageDialog(null, "Кодът не е намерен.", BaseConstants.ERROR,
 								JOptionPane.INFORMATION_MESSAGE);
-						txtZaCode.setText("0");
+						txtZaCode.setText("1");
 						txtZaCode.requestFocus();
 					}
 				}
@@ -269,6 +279,13 @@ public class AddMeasurements extends JFrame {
 		lblBzm.setFont(BaseConstants.DEFAULT_FONT);
 
 		txtBzm = new JTextField();
+		txtBzm.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				JTextField txt = (JTextField) e.getComponent();
+				txt.selectAll();
+			}
+		});
 		txtBzm.setText(BaseConstants.DEFAULT_BZM);
 		GridBagConstraints gbc_txtBzm = new GridBagConstraints();
 		gbc_txtBzm.insets = new Insets(0, 0, 0, 5);
@@ -317,9 +334,10 @@ public class AddMeasurements extends JFrame {
 
 						detailList.sort(Comparator.comparing(TimeMeasurementDetail::getFz));
 
-						//tiModel.addRow(tmDetail);
 						tiModel.updateTable(detailList);
-						
+
+						tblMain.scrollRectToVisible(new Rectangle(tblMain.getCellRect(detailList.size(), 0, true)));
+
 						BaseMethods.resizeColumnWidth(tblMain);
 						clearAddMeasurement();
 					}
@@ -337,12 +355,18 @@ public class AddMeasurements extends JFrame {
 						detailList.set(getIndex, tmDetail);
 
 						detailList.sort(Comparator.comparing(TimeMeasurementDetail::getFz));
-						
+
 						tiModel.updateTable(detailList);
 
 						clearAddMeasurement();
 					}
 				}
+			}
+
+			@Override
+			public void focusGained(FocusEvent e) {
+				JTextField txt = (JTextField) e.getComponent();
+				txt.selectAll();
 			}
 		});
 		txtLg.setFont(BaseConstants.DEFAULT_FONT);
@@ -488,22 +512,86 @@ public class AddMeasurements extends JFrame {
 		tblMain.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				TimeMeasurementDetail tmDetail = tiModel.getDetailAt(tblMain.getSelectedRow());
-				txtFz.setText(String.valueOf(tmDetail.getFz()));
-				txtFz.requestFocus();
-				txtBzm.setText(String.valueOf(tmDetail.getBzm()));
-				txtLg.setText(String.valueOf(tmDetail.getLg()));
-				chckbxTg.setSelected(tmDetail.getTg());
 
-				txtZaCode.setText(String.valueOf(tmDetail.getZaCode()));
+				if (tblMain.getSelectedRow() == selectedRow) {
+					clearAddMeasurement();
+				} else {
+					selectedRow = tblMain.getSelectedRow();
+					TimeMeasurementDetail tmDetail = tiModel.getDetailAt(selectedRow);
+					txtFz.setText(String.valueOf(tmDetail.getFz()));
+					txtFz.requestFocus();
+					txtBzm.setText(String.valueOf(tmDetail.getBzm()));
+					txtLg.setText(String.valueOf(tmDetail.getLg()));
+					chckbxTg.setSelected(tmDetail.getTg());
 
-				ZA za = zaList.stream().filter(zaItem -> tmDetail.getZaCode() == zaItem.getCode()).findAny()
-						.orElse(null);
+					txtZaCode.setText(String.valueOf(tmDetail.getZaCode()));
 
-				txtZaType.setText(za.getType());
-				cboZA.setSelectedIndex(zaList.indexOf(za));
+					ZA za = zaList.stream().filter(zaItem -> tmDetail.getZaCode() == zaItem.getCode()).findAny()
+							.orElse(null);
+
+					txtZaType.setText(za.getType());
+					cboZA.setSelectedIndex(zaList.indexOf(za));
+				}
 			}
 		});
+
+		JPopupMenu popupMenu = new JPopupMenu();
+		popupMenu.addPopupMenuListener(new PopupMenuListener() {
+
+			@Override
+			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						int rowAtPoint = tblMain
+								.rowAtPoint(SwingUtilities.convertPoint(popupMenu, new Point(0, 0), tblMain));
+						if (rowAtPoint > -1) {
+							tblMain.setRowSelectionInterval(rowAtPoint, rowAtPoint);
+							tmDetailSelected = tiModel.getDetailAt(tblMain.getSelectedRow());
+						}
+					}
+				});
+			}
+
+			@Override
+			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void popupMenuCanceled(PopupMenuEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+
+		JMenuItem deleteItem = new JMenuItem("Изтрий");
+		deleteItem.setFont(BaseConstants.DEFAULT_FONT);
+		deleteItem.setPreferredSize(new Dimension(150, 30));
+		popupMenu.add(deleteItem);
+		deleteItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+
+				Object[] options = { "Да", "Не" };
+				int response = JOptionPane.showOptionDialog(null, "Сигурни ли сте, че искате да изтриете записа?",
+						"Внимание", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);
+
+				if (response == 0) {
+					try {
+						detailList.remove(tmDetailSelected);
+						tiModel.updateTable(detailList);
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
+
+		tblMain.setComponentPopupMenu(popupMenu);
 
 		OddRowColorRenderer orcr = new OddRowColorRenderer();
 		tblMain.setDefaultRenderer(Object.class, orcr);
@@ -514,6 +602,17 @@ public class AddMeasurements extends JFrame {
 
 		setBackgroundPicture();
 		setVisible(true);
+	}
+
+	protected void fillDefaultValues(int zaCode, List<TimeMeasurementDetail> detailList) {
+		TimeMeasurementDetail tmDetail = detailList.stream().filter(tmItem -> zaCode == tmItem.getZaCode()).findFirst()
+				.orElse(null);
+
+		if (!(tmDetail == null)) {
+			chckbxTg.setSelected(tmDetail.getTg());
+			txtBzm.setText(String.valueOf(tmDetail.getBzm()));
+			txtLg.setText(String.valueOf(tmDetail.getLg()));
+		}
 	}
 
 	private class ZaRenderer extends DefaultListCellRenderer {

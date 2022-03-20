@@ -16,7 +16,7 @@ public class DetailTableItemModel extends AbstractTableModel {
 	private List<ZA> zaList;
 	int fz;
 
-	private static String header[] = { "Код", "Описание", "Тип", "FZ", "EZ", "LG", "TG"};
+	private static String header[] = { "Код", "Описание", "Тип", "FZ", "EZ", "TG", "BZM", "LG" };
 
 	public DetailTableItemModel(List<TimeMeasurementDetail> tmDetails) {
 
@@ -49,34 +49,37 @@ public class DetailTableItemModel extends AbstractTableModel {
 			value = tmDetail.getZaCode();
 			break;
 		case 1:
-			value = FindZa(tmDetail.getZaCode()).getDesc_bg();
+			value = findZa(tmDetail.getZaCode()).getDesc_bg();
 			break;
 		case 2:
-			value = FindZa(tmDetail.getZaCode()).getType();
+			value = findZa(tmDetail.getZaCode()).getType();
 			break;
 		case 3:
 			value = tmDetail.getFz();
 			break;
 		case 4:
-			value = CalculateEz(tmDetail.getFz());
+			value = calculateEz(tmDetail.getFz());
 			break;
 		case 5:
-			value = tmDetail.getLg();
+			value = tmDetail.getTg();
 			break;
 		case 6:
-			value = tmDetail.getTg();
+			value = tmDetail.getBzm();
+			break;
+		case 7:
+			value = tmDetail.getLg();
 			break;
 		}
 
 		return value;
 	}
 	
-	private ZA FindZa(int zaCode) {
+	private ZA findZa(int zaCode) {
 		ZA za = zaList.stream().filter(zaItem -> zaCode == zaItem.getCode()).findAny().orElse(null);
 		return za;
 	}
 
-	private int CalculateEz(int detailFz) {
+	private int calculateEz(int detailFz) {
 		int ez = detailFz - fz;
 
 		if (ez < 0) {
